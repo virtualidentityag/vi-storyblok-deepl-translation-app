@@ -44,7 +44,7 @@ const returnErrorMessage = (statusCode) => {
 };
 
 export const deepLTranslate = async (text, targetLanguage, sourceLanguage, deepLKey)=> {
-  console.log('text', text);
+  console.log('text', text, targetLanguage, sourceLanguage);
   
   const truncatedTargetLanguageString = transformLanguageString(targetLanguage);
   const truncatedSourceLanguageString = sourceLanguage !== "" ? transformLanguageString(sourceLanguage) : ""

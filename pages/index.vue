@@ -17,7 +17,8 @@
 				<p>Translate Into</p>
 
 				<el-checkbox-group v-for="locale in availableLanguages" :key="locale.lang" v-model="requestedLanguages">
-					<el-checkbox :value="locale.lang" :label="getAvailableLanguagesName(locale.lang)"></el-checkbox>
+					<!-- <el-checkbox :value="locale.lang" :label="locale.lang"> {{getAvailableLanguagesName(locale.lang)}} </el-checkbox> -->
+					<el-checkbox :label="locale.lang"> {{getAvailableLanguagesName(locale.lang)}} </el-checkbox>
 				</el-checkbox-group>
 			</el-row>
 
@@ -101,21 +102,21 @@
 			this.fetchDataSourceEntries()
 		},
 
-		beforeUpdate(previousValue){
-			console.log('updating', previousValue)
-			// window.addEventListener("message", this.processMessage, false);
+		// beforeUpdate(previousValue){
+		// 	console.log('updating', previousValue)
+		// 	// window.addEventListener("message", this.processMessage, false);
 
-			// // Use getContext to get the current story
-			// window.parent.postMessage(
-			// 	{
-			// 		action: "tool-changed",
-			// 		tool: "virtual-identity-ag@example-tool-app",
-			// 		event: "getContext",
-			// 	},
-			// 	"https://app.storyblok.com"
-			// );
-			// return true;
-		},
+		// 	// // Use getContext to get the current story
+		// 	// window.parent.postMessage(
+		// 	// 	{
+		// 	// 		action: "tool-changed",
+		// 	// 		tool: "virtual-identity-ag@example-tool-app",
+		// 	// 		event: "getContext",
+		// 	// 	},
+		// 	// 	"https://app.storyblok.com"
+		// 	// );
+		// 	// return true;
+		// },
 
 		//  watch: {
 		// 	// whenever question changes, this function will run
@@ -161,9 +162,10 @@
 					
 					if(event.data.story.localized_paths.length > 0){
 						this.languagesAvailable = true
-						this.availableLanguages = Array.from( event.data.story.localized_paths);
+						this.availableLanguages = Array.from(event.data.story.localized_paths);
 					}
 
+					console.log("event.data.story.localized_paths", event.data.story.localized_paths);
 					console.log("story", event.data.story);
 					console.log(".data", event.data.language);
 				}
@@ -239,7 +241,8 @@
 
 			transformLanguageString(languageString){
 				const splittedString = languageString.split('-')
-				return splittedString.reduce((previousValue, currentValue) => previousValue + '_' + currentValue)
+				console.log('splitteedString', splittedString, languageString)
+				return splittedString.reduce((previousValue, currentValue) => previousValue.trim() + '_' + currentValue.trim())
 			},
 
 			extractingFields(storyJson,storyObject) {
@@ -352,36 +355,36 @@
 
 				console.log('storyJSON', storyJson);
 
-				// extractedFields = Array.from(this.extractingFields(storyJson, storyObject))
+				extractedFields = Array.from(this.extractingFields(storyJson, storyObject))
 				
-				// let builder = new xml2js.Builder();
-				// let extractedFieldsXML = builder.buildObject(extractedFields);
+				let builder = new xml2js.Builder();
+				let extractedFieldsXML = builder.buildObject(extractedFields);
 				
-				
-				// if(this.requestedLanguages.length > 0)
-				// this.requestedLanguages.forEach(async (requestedLanguage) => {
-				// 	const response = await deepLTranslate(
-				// 						extractedFieldsXML,
-				// 						requestedLanguage.split("-")[0],
-				// 						// this.currentLanguage.split("-")[0].toUpperCase(),
-				// 						sourceLanguage,
-				// 						this.apiKey,
-				// 					);
-				// 	if (response) {
-				// 		this.successMessage();
-				// 		xml2js.parseString(
-				// 			response.translations[0].text,
-				// 			(err, result) => {
-				// 				if (err) throw err;
-				// 				json = JSON.parse(JSON.stringify(result, null, 4));
-				// 			}
-				// 		);
+				console.log('source', sourceLanguage, this.currentLanguage)
+				if(this.requestedLanguages.length > 0)
+				this.requestedLanguages.forEach(async (requestedLanguage) => {
+					const response = await deepLTranslate(
+										extractedFieldsXML,
+										requestedLanguage.split("-")[0].trim(),
+										// this.currentLanguage.split("-")[0].toUpperCase(),
+										sourceLanguage,
+										this.apiKey,
+									);
+					if (response) {
+						this.successMessage();
+						xml2js.parseString(
+							response.translations[0].text,
+							(err, result) => {
+								if (err) throw err;
+								json = JSON.parse(JSON.stringify(result, null, 4));
+							}
+						);
 
-				// 		storyObject = await updateStory( this.$route.query.space_id, this.story.id, 
-				// 											  JSON.parse(this.updatingStoryContents( storyJson, storyObject,
-				// 																					 requestedLanguage, json )));
-				// 	}
-				// });
+						storyObject = await updateStory( this.$route.query.space_id, this.story.id, 
+															  JSON.parse(this.updatingStoryContents( storyJson, storyObject,
+																									 requestedLanguage, json )));
+					}
+				});
 			},
 			successMessage() {
 				Notification({

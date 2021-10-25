@@ -56,7 +56,7 @@ export const fetchStory = async (spaceId, storyId, language) => {
     const storyJSON = await Storyblok.get(
         `spaces/${spaceId}/stories/${storyId}/export.json`,
         // {}
-          language !== "" ? {lang_code: language} : {}
+          language !== "" && language !== "Default Language" ? {lang_code: language} : {}
         )
         .then((response) => {
             console.log("response of fetched stor", response);
