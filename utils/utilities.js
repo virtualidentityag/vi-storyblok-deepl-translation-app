@@ -54,7 +54,7 @@ export const fetchStory = async (spaceId, storyId, language) => {
         });
 
     const storyJSON = await Storyblok.get(
-        `spaces/${spaceId}/stories/${storyId}/export.json`,
+        `spaces/${spaceId}/stories/${storyId}/export.xml`,
         // {}
           language !== "" && language !== "Default Language" ? {lang_code: language} : {}
         )
@@ -69,9 +69,24 @@ export const fetchStory = async (spaceId, storyId, language) => {
     return { storyObj, storyJSON };
 }
 
+// export const  updateStory = async (spaceId, storyId, story) => {
+//     const response = await Storyblok.put(
+//         `spaces/${spaceId}/stories/${storyId}`,{
+//             story: { ...story },
+//         }
+//     )
+//         .then((response) => {
+//             return response.data.story;
+//         })
+//         .catch((error) => {
+//             console.log(error);
+//         });
+//     console.log("updated response", response);
+//     return response;
+// }
 export const  updateStory = async (spaceId, storyId, story) => {
     const response = await Storyblok.put(
-        `spaces/${spaceId}/stories/${storyId}`,{
+        `spaces/${spaceId}/stories/${storyId}/import.xml`,{
             story: { ...story },
         }
     )
