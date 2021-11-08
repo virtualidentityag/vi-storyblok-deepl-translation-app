@@ -102,29 +102,6 @@
 			this.fetchDataSourceEntries()
 		},
 
-		// beforeUpdate(previousValue){
-		// 	console.log('updating', previousValue)
-		// 	// window.addEventListener("message", this.processMessage, false);
-
-		// 	// // Use getContext to get the current story
-		// 	// window.parent.postMessage(
-		// 	// 	{
-		// 	// 		action: "tool-changed",
-		// 	// 		tool: "virtual-identity-ag@example-tool-app",
-		// 	// 		event: "getContext",
-		// 	// 	},
-		// 	// 	"https://app.storyblok.com"
-		// 	// );
-		// 	// return true;
-		// },
-
-		//  watch: {
-		// 	// whenever question changes, this function will run
-		// 	$route (to, from){
-		// 	console.log('changed', to, from)
-		// 	}
-		// },
-
 		methods: {
 		
 			editorEvents(){
