@@ -44,12 +44,12 @@ const returnErrorMessage = (statusCode) => {
 };
 
 export const deepLTranslate = async (text, targetLanguage, sourceLanguage, deepLKey)=> {
-  console.log('text', text, targetLanguage, sourceLanguage);
+  // console.log('text', text, targetLanguage, sourceLanguage);
   
   const truncatedTargetLanguageString = transformLanguageString(targetLanguage);
   const truncatedSourceLanguageString = sourceLanguage !== "" ? transformLanguageString(sourceLanguage) : ""
 
-  console.log('translation', truncatedTargetLanguageString, truncatedSourceLanguageString);
+  // console.log('translation', truncatedTargetLanguageString, truncatedSourceLanguageString);
 
   // if (isLanguageDeepLCompatible(truncatedSourceLanguageString) && isLanguageDeepLCompatible(truncatedTargetLanguageString)) {
   if (isLanguageDeepLCompatible(truncatedTargetLanguageString)) {
