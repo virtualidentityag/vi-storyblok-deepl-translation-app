@@ -322,46 +322,56 @@
 			},
 
 			async sendTranslationRequest() {
-				let json = "";
-				// let updatedStory = await this.fetchStory();
-				let updatedStory = await fetchStory(this.$route.query.space_id,this.story.id, this.currentLanguage);
-				let storyObject = updatedStory.storyObj
-				let storyJson = updatedStory.storyJSON
-				let extractedFields = [];
-				let sourceLanguage = this.currentLanguage !== "Default Language" ? this.currentLanguage.split("-")[0].toUpperCase() : ""
+				if(this.requestedLanguages.length > 0){
+					let json = "";
+					// let updatedStory = await this.fetchStory();
+					let updatedStory = await fetchStory(this.$route.query.space_id,this.story.id, this.currentLanguage);
+					let storyObject = updatedStory.storyObj
+					let storyJson = updatedStory.storyJSON
+					let extractedFields = [];
+					let sourceLanguage = this.currentLanguage !== "Default Language" ? this.currentLanguage.split("-")[0].toUpperCase() : ""
+	
+					console.log('storyJSON', storyJson);
+					extractedFields = Array.from(this.extractingFields(storyJson, storyObject))
+					console.log('extractedFields', extractedFields);
 
-				console.log('storyJSON', storyJson);
-
-				extractedFields = Array.from(this.extractingFields(storyJson, storyObject))
-				
-				let builder = new xml2js.Builder();
-				let extractedFieldsXML = builder.buildObject(extractedFields);
-				
-				console.log('source', sourceLanguage, this.currentLanguage)
-				if(this.requestedLanguages.length > 0)
-				this.requestedLanguages.forEach(async (requestedLanguage) => {
-					const response = await deepLTranslate(
-										extractedFieldsXML,
-										requestedLanguage.split("-")[0].trim(),
-										// this.currentLanguage.split("-")[0].toUpperCase(),
-										sourceLanguage,
-										this.apiKey,
-									);
-					if (response) {
-						this.successMessage();
-						xml2js.parseString(
-							response.translations[0].text,
-							(err, result) => {
-								if (err) throw err;
-								json = JSON.parse(JSON.stringify(result, null, 4));
-							}
-						);
-
-						storyObject = await updateStory( this.$route.query.space_id, this.story.id, 
-															  JSON.parse(this.updatingStoryContents( storyJson, storyObject,
-																									 requestedLanguage, json )));
-					}
-				});
+					let builder = new xml2js.Builder();
+					// let extractedFieldsXML = builder.buildObject(extractedFields);
+					let extractedFieldsXML = builder.buildObject(JSON.parse(JSON.stringify(extractedFields)));
+					
+					console.log('source', sourceLanguage, this.currentLanguage)
+					console.log('extractedFieldsXML', extractedFieldsXML)
+					// if(this.requestedLanguages.length > 0)
+					this.requestedLanguages.forEach(async (requestedLanguage) => {
+						const response = await deepLTranslate(
+											extractedFieldsXML,
+											requestedLanguage.split("-")[0].trim(),
+											// this.currentLanguage.split("-")[0].toUpperCase(),
+											sourceLanguage,
+											this.apiKey,
+										);
+						if (response) {
+							// this.successMessage();
+							xml2js.parseString(
+								response.translations[0].text,
+								(err, result) => {
+									if (err) throw err;
+									json = JSON.parse(JSON.stringify(result, null, 4));
+								}
+							);
+	
+							storyObject = await updateStory( this.$route.query.space_id, this.story.id, 
+																  JSON.parse(this.updatingStoryContents( storyJson, storyObject,
+																										 requestedLanguage, json )));
+							if(storyObject)
+								this.successMessage();
+							else
+								this.errorMessage(requestedLanguage)
+						}
+					});
+				}
+				else
+					this.languageErrorMessage();
 			},
 			successMessage() {
 				Notification({
@@ -370,6 +380,21 @@
 				type: 'success',
 				});
 			},
+			languageErrorMessage() {
+				Notification({
+				title: 'Error',
+				message: 'Please select atleast one target language',
+				type: 'error',
+				});
+			},
+			errorMessage(lang){
+				Notification({
+				title: 'Error',
+				message: `{Error occurred for language ${this.getlangName(lang)}. Please try again later.}`,
+				type: 'error',
+				duration:20000
+				});
+			}
 		},
 	};
 </script>
