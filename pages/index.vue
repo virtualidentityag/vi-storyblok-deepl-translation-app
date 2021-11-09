@@ -102,29 +102,6 @@
 			this.fetchDataSourceEntries()
 		},
 
-		// beforeUpdate(previousValue){
-		// 	console.log('updating', previousValue)
-		// 	// window.addEventListener("message", this.processMessage, false);
-
-		// 	// // Use getContext to get the current story
-		// 	// window.parent.postMessage(
-		// 	// 	{
-		// 	// 		action: "tool-changed",
-		// 	// 		tool: "virtual-identity-ag@example-tool-app",
-		// 	// 		event: "getContext",
-		// 	// 	},
-		// 	// 	"https://app.storyblok.com"
-		// 	// );
-		// 	// return true;
-		// },
-
-		//  watch: {
-		// 	// whenever question changes, this function will run
-		// 	$route (to, from){
-		// 	console.log('changed', to, from)
-		// 	}
-		// },
-
 		methods: {
 		
 			editorEvents(){
@@ -345,84 +322,56 @@
 			},
 
 			async sendTranslationRequest() {
-				let json = "";
-				// let updatedStory = await this.fetchStory();
-				let updatedStory = await fetchStory(this.$route.query.space_id,this.story.id, this.currentLanguage);
-				let storyObject = updatedStory.storyObj
-				let storyJson = updatedStory.storyJSON
-				let extractedFields = [];
-				let sourceLanguage = this.currentLanguage !== "Default Language" ? this.currentLanguage.split("-")[0].toUpperCase() : ""
+				if(this.requestedLanguages.length > 0){
+					let json = "";
+					// let updatedStory = await this.fetchStory();
+					let updatedStory = await fetchStory(this.$route.query.space_id,this.story.id, this.currentLanguage);
+					let storyObject = updatedStory.storyObj
+					let storyJson = updatedStory.storyJSON
+					let extractedFields = [];
+					let sourceLanguage = this.currentLanguage !== "Default Language" ? this.currentLanguage.split("-")[0].toUpperCase() : ""
+	
+					console.log('storyJSON', storyJson);
+					extractedFields = Array.from(this.extractingFields(storyJson, storyObject))
+					console.log('extractedFields', extractedFields);
 
-				console.log('storyJSON', storyJson);
-				// for(let key in storyJson){
-				// 	// console.log('object', storyJson[key])
-				// 	extractedFields.push(storyJson[key])
-				// }
-				// console.log('object', extractedFields)
-				// extractedFields = Array.from(this.extractingFields(storyJson, storyObject))
-				
-				// let builder = new xml2js.Builder();
-				// let extractedFieldsXML = builder.buildObject(storyJson);
-// 				let extractedFieldsXML = '';
-// 				xml2js.parseString(
-// 					storyJson,
-// 					(err, result) => {
-// 						if (err) throw err;
-// 						extractedFieldsXML = JSON.parse(JSON.stringify(result, null, 4));
-// 					}
-// 				);
-// // 				// // let extractedFieldsXML = builder.buildObject(extractedFields);
-				
-// // 				// // console.log('source', sourceLanguage, this.currentLanguage)
-// 				console.log('source', extractedFieldsXML.page.tags[0].tag)
-				
-				// let builder = new xml2js.Builder();
-				// let BextractedFieldsXML = builder.buildObject(extractedFieldsXML);
-
-				// console.log('source', BextractedFieldsXML)
-				// let newReqArr = []
-				// extractedFieldsXML.page.tags[0].tag.reduce((previousValue, currentValue) => newReqArr.push(currentValue.text[0]))
-				// console.log('object', newReqArr)
-storyObject = await updateStory( this.$route.query.space_id, this.story.id, storyJson);
-// 				if(this.requestedLanguages.length > 0)
-// 				this.requestedLanguages.forEach(async (requestedLanguage) => {
-// 					const response = await deepLTranslate(
-// 										// JSON.stringify(newReqArr),
-// 										storyJson,
-// 										requestedLanguage.split("-")[0].trim(),
-// 										// this.currentLanguage.split("-")[0].toUpperCase(),
-// 										sourceLanguage,
-// 										this.apiKey,
-// 									);
-// 					if (response) {
-// 						let newArr = {};
-// 						this.successMessage();
-// 						// console.log('object',	JSON.parse(response.translations[0].text))
-// 				// 			let builder = new xml2js.Builder();
-// 				// let reponseXML = builder.buildObject(response.translations[0].text);
-// 				// console.log('reponseXML', reponseXML);
-// // let index = 0
-// // 						for(let key in storyJson){
-// // 							// console.log('object', JSON.parse(response.translations[0].text)[key])
-// // 							Object.assign(newArr,{[key]:JSON.parse(response.translations[0].text)[index]})
-// // 							++index
-// // 						}
-
-// 						console.log('newArr', newArr)
-// 						// xml2js.parseString(
-// 						// 	response.translations[0].text,
-// 						// 	(err, result) => {
-// 						// 		if (err) throw err;
-// 						// 		json = JSON.parse(JSON.stringify(result, null, 4));
-// 						// 	}
-// 						// );
-
-// 						// storyObject = await updateStory( this.$route.query.space_id, this.story.id, 
-// 						// 									  JSON.parse(this.updatingStoryContents( storyJson, storyObject,
-// 						// 																			 requestedLanguage, json )));
-// 						// storyObject = await updateStory( this.$route.query.space_id, this.story.id, response.translations[0].text);
-// 					}
-// 				});
+					let builder = new xml2js.Builder();
+					// let extractedFieldsXML = builder.buildObject(extractedFields);
+					let extractedFieldsXML = builder.buildObject(JSON.parse(JSON.stringify(extractedFields)));
+					
+					console.log('source', sourceLanguage, this.currentLanguage)
+					console.log('extractedFieldsXML', extractedFieldsXML)
+					// if(this.requestedLanguages.length > 0)
+					this.requestedLanguages.forEach(async (requestedLanguage) => {
+						const response = await deepLTranslate(
+											extractedFieldsXML,
+											requestedLanguage.split("-")[0].trim(),
+											// this.currentLanguage.split("-")[0].toUpperCase(),
+											sourceLanguage,
+											this.apiKey,
+										);
+						if (response) {
+							// this.successMessage();
+							xml2js.parseString(
+								response.translations[0].text,
+								(err, result) => {
+									if (err) throw err;
+									json = JSON.parse(JSON.stringify(result, null, 4));
+								}
+							);
+	
+							storyObject = await updateStory( this.$route.query.space_id, this.story.id, 
+																  JSON.parse(this.updatingStoryContents( storyJson, storyObject,
+																										 requestedLanguage, json )));
+							if(storyObject)
+								this.successMessage();
+							else
+								this.errorMessage(requestedLanguage)
+						}
+					});
+				}
+				else
+					this.languageErrorMessage();
 			},
 			successMessage() {
 				Notification({
@@ -431,6 +380,21 @@ storyObject = await updateStory( this.$route.query.space_id, this.story.id, stor
 				type: 'success',
 				});
 			},
+			languageErrorMessage() {
+				Notification({
+				title: 'Error',
+				message: 'Please select atleast one target language',
+				type: 'error',
+				});
+			},
+			errorMessage(lang){
+				Notification({
+				title: 'Error',
+				message: `{Error occurred for language ${this.getlangName(lang)}. Please try again later.}`,
+				type: 'error',
+				duration:20000
+				});
+			}
 		},
 	};
 </script>
