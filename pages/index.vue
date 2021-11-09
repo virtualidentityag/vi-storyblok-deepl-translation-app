@@ -17,14 +17,12 @@
 				<p>Translate Into</p>
 
 				<el-checkbox-group v-for="locale in availableLanguages" :key="locale.lang" v-model="requestedLanguages">
-					<!-- <el-checkbox :value="locale.lang" :label="locale.lang"> {{getAvailableLanguagesName(locale.lang)}} </el-checkbox> -->
 					<el-checkbox :label="locale.lang"> {{getAvailableLanguagesName(locale.lang)}} </el-checkbox>
 				</el-checkbox-group>
 			</el-row>
 
 			<el-row>
 				<el-button v-on:click="sendTranslationRequest" :disabled='invalidKey' type="primary" size="mini">Translate Content</el-button>
-				<!-- <el-button v-on:click="getRoute" :disabled='invalidKey' type="primary" size="mini">Translate Content</el-button> -->
 			</el-row>
 		</el-row>
 		
@@ -229,7 +227,7 @@
 					let extracted = keys.split(":");
 					let splitStr = "";
 					console.log('length = ', extracted.length, extracted)
-					if (extracted.length > 1 && extracted.length < 4) {
+					// if (extracted.length > 1 && extracted.length < 4) {
 
 						splitStr = JSON.stringify(storyObject).slice(JSON.stringify(storyObject).indexOf(extracted[0]));
 
@@ -252,7 +250,7 @@
 							console.log('strValue', strValue);
 							splitArray.push({ [JSON.parse(strKey)]: JSON.parse(strValue) });
 						}
-					}
+					// }
 				}
 
 				return splitArray
@@ -321,13 +319,25 @@
 				return translatedStoryObj;
 			},
 
+			removeUnwanted(storyJson, storyJsonWithLang){
+				let newStoryJson = {}
+
+				for(let keyOfStoryJson in storyJson){
+					if(storyJsonWithLang.hasOwnProperty(keyOfStoryJson)){
+						Object.assign(newStoryJson, {[keyOfStoryJson]: storyJson[keyOfStoryJson]})
+					}
+				}
+
+				return newStoryJson
+			},
+
 			async sendTranslationRequest() {
 				if(this.requestedLanguages.length > 0){
 					let json = "";
 					// let updatedStory = await this.fetchStory();
-					let updatedStory = await fetchStory(this.$route.query.space_id,this.story.id, this.currentLanguage);
+					let updatedStory = await fetchStory(this.$route.query.space_id,this.story.id, this.availableLanguages[0].lang);
 					let storyObject = updatedStory.storyObj
-					let storyJson = updatedStory.storyJSON
+					let storyJson = this.removeUnwanted(updatedStory.storyJSON,  updatedStory.storyJSONWithLang)
 					let extractedFields = [];
 					let sourceLanguage = this.currentLanguage !== "Default Language" ? this.currentLanguage.split("-")[0].toUpperCase() : ""
 	
@@ -341,7 +351,7 @@
 					
 					console.log('source', sourceLanguage, this.currentLanguage)
 					console.log('extractedFieldsXML', extractedFieldsXML)
-					// if(this.requestedLanguages.length > 0)
+					if(this.requestedLanguages.length > 0)
 					this.requestedLanguages.forEach(async (requestedLanguage) => {
 						const response = await deepLTranslate(
 											extractedFieldsXML,
@@ -390,7 +400,7 @@
 			errorMessage(lang){
 				Notification({
 				title: 'Error',
-				message: `{Error occurred for language ${this.getlangName(lang)}. Please try again later.}`,
+				message: `Error occurred for language ${this.getlangName(lang)}. Please try again later.`,
 				type: 'error',
 				duration:20000
 				});
