@@ -226,7 +226,7 @@
 				for (let keys in storyJson) {
 					let extracted = keys.split(":");
 					let splitStr = "";
-					console.log('length = ', extracted.length, extracted)
+					// console.log('length = ', extracted.length, extracted)
 					// if (extracted.length > 1 && extracted.length < 4) {
 
 						splitStr = JSON.stringify(storyObject).slice(JSON.stringify(storyObject).indexOf(extracted[0]));
@@ -242,7 +242,7 @@
 						splitStr = splitStr.match(/[^\[](.*)[^\]]/g);
 
 						if (splitStr) {
-							console.log('splitStr!!!!!!!', splitStr);
+							// console.log('splitStr!!!!!!!', splitStr);
 							splitStr 	 = splitStr.toString().split(`,"`);
 							let strKey 	 = splitStr[0].substring(0, splitStr[0].indexOf(":"));
 							let strValue = splitStr[0].substring( splitStr[0].indexOf(":") + 1);
