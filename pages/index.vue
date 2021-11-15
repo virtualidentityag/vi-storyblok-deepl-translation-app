@@ -216,7 +216,7 @@
 
 			transformLanguageString(languageString){
 				const splittedString = languageString.split('-')
-				console.log('splitteedString', splittedString, languageString)
+				// console.log('splitteedString', splittedString, languageString)
 				return splittedString.reduce((previousValue, currentValue) => previousValue.trim() + '_' + currentValue.trim())
 			},
 
@@ -351,7 +351,7 @@
 					
 					console.log('source', sourceLanguage, this.currentLanguage)
 					console.log('extractedFieldsXML', extractedFieldsXML)
-					if(this.requestedLanguages.length > 0)
+					
 					this.requestedLanguages.forEach(async (requestedLanguage) => {
 						const response = await deepLTranslate(
 											extractedFieldsXML,
