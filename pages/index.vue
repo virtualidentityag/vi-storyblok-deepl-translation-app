@@ -48,7 +48,7 @@
 	import xml2js from "xml2js";
 	import { Notification } from 'element-ui';
 	import { deepLTranslate } from './../utils/deepl-services'
-	import { fetchStory, createDataSource, createDataSourceEntry, updateStory, fetchDataSources } from './../utils/utilities'
+	import { fetchStory, createDataSource, createDataSourceEntry, updateStory, fetchDataSources } from '../utils/services'
 	import { languageCodes } from './../utils/language-codes'
 	import Storyblok from "./../utils/Storyblok-config";
 
