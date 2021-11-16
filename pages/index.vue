@@ -204,7 +204,7 @@
 					// if (extracted.length > 1 && extracted.length < 4) {
 
 						splitStr = JSON.stringify(storyObject).slice(JSON.stringify(storyObject).indexOf(extracted[0])); //splitting the object from _uid and further
-
+ 
 					
 						if (splitStr.indexOf(extracted[1]) < splitStr.indexOf(extracted[2])) { //making sure to further extract on correct positions
 							splitStr = splitStr.slice(splitStr.indexOf(`"${extracted[1]}"`));
