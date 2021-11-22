@@ -103,7 +103,7 @@
 			processMessage(event) {
 				// console.log('event outside', event)
 				if (event.data && event.data.action == "get-context") {
-					// console.log('event', event)
+					console.log('event', event)
 					this.loadingContext = false;
 					this.story = event.data.story;
 					this.currentLanguage = event.data.language !== "" ? event.data.language : "Default Language";
@@ -193,6 +193,31 @@
 				return splittedString.reduce((previousValue, currentValue) => previousValue.trim() + '_' + currentValue.trim())
 			},
 
+			generateXML(arr){
+				let str = ''
+				for(let i = 0; i < arr.length; i++){
+					console.log(arr[i])
+					for(let key in arr[i]){
+						str+= `${'<'+[key]+'>'+[arr[i][key]]+'</'+[key]+'>'}`
+					}
+				}
+
+				return str;
+			},
+			convertXMLToJSON(xml,extractedFields){
+				let arr = []
+
+				for(let i = 0; i < extractedFields.length; i++){
+					let key = xml.substring(xml.indexOf('<')+1, xml.indexOf('>'))
+					let value = xml.substring(xml.indexOf('>')+1, xml.indexOf('</'))
+
+					xml = xml.substring(xml.indexOf('><')+1, xml.length)
+
+					arr.push({[key]: value})
+				}
+				return arr;
+			},
+
 			// extracts the fields from story object with the help of story json returned by export.json api
 			extractingFields(storyJson,storyObject) {
 				let splitArray = [];
@@ -200,8 +225,11 @@
 				for (let keys in storyJson) {
 					let extracted = keys.split(":"); // splitting e.g {4e272c60-a59e-4c1d-b7bc-115b920588e6:button:text: "Call to action"} in 3 parts
 					let splitStr = "";
+					// console.log('keys uid', keys)
+					// console.log('extracted0', extracted[0])
 					// console.log('length = ', extracted.length, extracted)
 					// if (extracted.length > 1 && extracted.length < 4) {
+					if (extracted.length > 1 ) {
 
 						splitStr = JSON.stringify(storyObject).slice(JSON.stringify(storyObject).indexOf(extracted[0])); //splitting the object from _uid and further
  
@@ -210,8 +238,8 @@
 							splitStr = splitStr.slice(splitStr.indexOf(`"${extracted[1]}"`));
 							splitStr = splitStr.slice(splitStr.indexOf(`"${extracted[2]}"`));
 						} 
-						else 
-							splitStr = splitStr.slice(splitStr.indexOf(`"${extracted[2]}":"${storyJson[keys]}"`));
+						else
+							splitStr = splitStr.slice(splitStr.indexOf(`"${extracted[2]}":${storyJson[keys]}`));
 
 						splitStr = splitStr.match(/[^\[](.*)[^\]]/g); // cleaning the string
 
@@ -220,11 +248,12 @@
 							splitStr 	 = splitStr.toString().split(`,"`);
 							let strKey 	 = splitStr[0].substring(0, splitStr[0].indexOf(":"));
 							let strValue = splitStr[0].substring( splitStr[0].indexOf(":") + 1);
-							// console.log('strKey', strKey);
+							// console.log('strKey', strKey,' |||| ', strValue);
 							// console.log('strValue', strValue);
-							splitArray.push({ [JSON.parse(strKey)]: JSON.parse(strValue) }); // creating an array of translatable fields
+							splitArray.push({ [`${JSON.parse(strKey)}`]: JSON.parse(strValue) }); // creating an array of translatable fields
+							// console.log('splitArray', splitArray)
 						}
-					// }
+					}
 				}
 
 				return splitArray
@@ -254,42 +283,44 @@
 																`"${extracted[2]}__i18n__XXXX${this.transformLanguageString(requestedLanguage)}"`)
 						}
 
-						for (let keys in translatedJson.root) {
-							
-							// making sure string is being concatinated on the correct position
-							if (keys.localeCompare(extracted[2]) === Number(0)) {
-								let value =  translatedJson.root[keys][0];
-								let newObj = `"${keys}__i18n__${this.transformLanguageString(requestedLanguage)}":${JSON.stringify(value)}`;
+							for (let _keys in translatedJson[0]) {
 
-								if(value.startsWith('"') && value.endsWith('"'))
-									newObj = `"${keys}__i18n__${this.transformLanguageString(requestedLanguage)}":"\\${value}`; 
-								
-								fullStr = splitingResponse[0].concat(`"${extracted[0]}"`);
-							
-								if(!fullStr.endsWith(',')){ // trying to make the correct format of the json
-									fullStr = fullStr.concat(",");
+								// making sure string is being concatinated on the correct position
+								if (_keys.localeCompare(extracted[2]) === Number(0)) {
 									
-									if(firstHalfStr.startsWith(','))
-										firstHalfStr = firstHalfStr.substring(1);
-								}
+									let value =  translatedJson[0][_keys];
+									let newObj = `"${_keys}__i18n__${this.transformLanguageString(requestedLanguage)}":${JSON.stringify(value)}`;
 
-								fullStr = fullStr.concat(firstHalfStr);
-								fullStr = fullStr.concat(newObj);
-
-								if(!fullStr.endsWith(',')){
-									fullStr = fullStr.concat(",")
-
-									if(secondHalfStr.startsWith(','))
-										secondHalfStr = secondHalfStr.substring(1);
-								}
-
-								fullStr = fullStr.concat(secondHalfStr);
-
-								// removing the key which has just been concatinated
-								if (translatedJson.root[keys].length > 1) translatedJson.root[keys].splice(0,1);
+									if(value.startsWith('"') && value.endsWith('"'))
+										newObj = `"${_keys}__i18n__${this.transformLanguageString(requestedLanguage)}":"\\${value}`; 
+									
+									fullStr = splitingResponse[0].concat(`"${extracted[0]}"`);
 								
-								translatedStoryObj = fullStr;
-							}
+									if(!fullStr.endsWith(',')){ // trying to make the correct format of the json
+										fullStr = fullStr.concat(",");
+										
+										if(firstHalfStr.startsWith(','))
+											firstHalfStr = firstHalfStr.substring(1);
+									}
+
+									fullStr = fullStr.concat(firstHalfStr);
+									fullStr = fullStr.concat(newObj);
+
+									if(!fullStr.endsWith(',')){
+										fullStr = fullStr.concat(",")
+
+										if(secondHalfStr.startsWith(','))
+											secondHalfStr = secondHalfStr.substring(1);
+									}
+
+									fullStr = fullStr.concat(secondHalfStr);
+
+									// removing the key which has just been concatinated
+									if (translatedJson[0][_keys].length > 1) translatedJson.splice(0,1);
+
+									translatedStoryObj = fullStr;
+									break;
+								}
 						}
 					}
 				}	
@@ -304,7 +335,7 @@
 
 				for(let keyOfStoryJson in storyJson){
 					if(storyJsonWithLang.hasOwnProperty(keyOfStoryJson)){
-						Object.assign(newStoryJson, {[keyOfStoryJson]: storyJson[keyOfStoryJson]})
+						Object.assign(newStoryJson, {[keyOfStoryJson]: JSON.stringify(storyJson[keyOfStoryJson])})
 					}
 				}
 
@@ -317,20 +348,21 @@
 					let updatedStory = await fetchStory(this.$route.query.space_id,this.story.id, this.availableLanguages[0].lang);
 					let storyObject = updatedStory.storyObj
 					let storyJson = this.removeUnwanted(updatedStory.storyJSON,  updatedStory.storyJSONWithLang)
+					
 					let extractedFields = [];
 					let sourceLanguage = this.currentLanguage !== "Default Language" ? this.currentLanguage.split("-")[0].toUpperCase() : ""
 	
 					// console.log('storyJSON', storyJson);
 					extractedFields = Array.from(this.extractingFields(storyJson, storyObject))
-					// console.log('extractedFields', extractedFields);
+					console.log('extractedFields', extractedFields);
 
 					// converting json to xml
-					let builder = new xml2js.Builder();
-					// let extractedFieldsXML = builder.buildObject(extractedFields);
-					let extractedFieldsXML = builder.buildObject(JSON.parse(JSON.stringify(extractedFields)));
+					let extractedFieldsXML = this.generateXML(extractedFields)
+
+					// let builder = new xml2js.Builder();
+					// // let extractedFieldsXML = builder.buildObject(extractedFields);
+					// let extractedFieldsXML = builder.buildObject(JSON.parse(JSON.stringify(extractedFields)));
 					
-					// console.log('source', sourceLanguage, this.currentLanguage)
-					// console.log('extractedFieldsXML', extractedFieldsXML)
 					
 					this.requestedLanguages.forEach(async (requestedLanguage) => {
 						const response = await deepLTranslate(
@@ -342,17 +374,21 @@
 						if (response) {
 
 							// converting xml to json
-							xml2js.parseString(
-								response.translations[0].text,
-								(err, result) => {
-									if (err) throw err;
-									json = JSON.parse(JSON.stringify(result, null, 4));
-								}
-							);
+							let convertedXml = this.convertXMLToJSON(response.translations[0].text,extractedFields)
+
+							// xml2js.parseString(
+							// 	response.translations[0].text,
+							// 	(err, result) => {
+							// 		if (err) throw err;
+							// 		json = JSON.parse(JSON.stringify(result, null, 4));
+							// 	}
+							// );
+							// console.log('convertedXml', convertedXml)
 	
 							storyObject = await updateStory( this.$route.query.space_id, this.story.id, 
 																  JSON.parse(this.updatingStoryContents( storyJson, storyObject,
-																										 requestedLanguage, json )));
+																										 requestedLanguage, convertedXml )));
+						
 							if(storyObject)
 								this.successMessage();
 							else
