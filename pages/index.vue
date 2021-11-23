@@ -45,7 +45,6 @@
 </template>
 
 <script>
-	import xml2js from "xml2js";
 	import { Notification } from 'element-ui';
 	import { deepLTranslate } from './../utils/deepl-services'
 	import { fetchStory, createDataSource, createDataSourceEntry, updateStory, fetchDataSources } from '../utils/services'
@@ -107,17 +106,12 @@
 					this.loadingContext = false;
 					this.story = event.data.story;
 					this.currentLanguage = event.data.language !== "" ? event.data.language : "Default Language";
-					// this.currentLanguage = event.data.language !== "" ? event.data.language : "EN-EN";
-
 					
 					if(event.data.story.localized_paths.length > 0){
 						this.languagesAvailable = true
 						this.availableLanguages = Array.from(event.data.story.localized_paths);
 					}
 
-					// console.log("event.data.story.localized_paths", event.data.story.localized_paths);
-					// console.log("story", event.data.story);
-					// console.log(".data", event.data.language);
 				}
 			},
 
@@ -189,7 +183,6 @@
 			
 			transformLanguageString(languageString){
 				const splittedString = languageString.split('-')
-				// console.log('splitteedString', splittedString, languageString)
 				return splittedString.reduce((previousValue, currentValue) => previousValue.trim() + '_' + currentValue.trim())
 			},
 
@@ -225,14 +218,10 @@
 				for (let keys in storyJson) {
 					let extracted = keys.split(":"); // splitting e.g {4e272c60-a59e-4c1d-b7bc-115b920588e6:button:text: "Call to action"} in 3 parts
 					let splitStr = "";
-					// console.log('keys uid', keys)
-					// console.log('extracted0', extracted[0])
-					// console.log('length = ', extracted.length, extracted)
-					// if (extracted.length > 1 && extracted.length < 4) {
+					
 					if (extracted.length > 1 ) {
 
 						splitStr = JSON.stringify(storyObject).slice(JSON.stringify(storyObject).indexOf(extracted[0])); //splitting the object from _uid and further
- 
 					
 						if (splitStr.indexOf(extracted[1]) < splitStr.indexOf(extracted[2])) { //making sure to further extract on correct positions
 							splitStr = splitStr.slice(splitStr.indexOf(`"${extracted[1]}"`));
@@ -244,14 +233,12 @@
 						splitStr = splitStr.match(/[^\[](.*)[^\]]/g); // cleaning the string
 
 						if (splitStr) {
-							// console.log('splitStr!!!!!!!', splitStr);
+							
 							splitStr 	 = splitStr.toString().split(`,"`);
 							let strKey 	 = splitStr[0].substring(0, splitStr[0].indexOf(":"));
 							let strValue = splitStr[0].substring( splitStr[0].indexOf(":") + 1);
-							// console.log('strKey', strKey,' |||| ', strValue);
-							// console.log('strValue', strValue);
+							
 							splitArray.push({ [`${JSON.parse(strKey)}`]: JSON.parse(strValue) }); // creating an array of translatable fields
-							// console.log('splitArray', splitArray)
 						}
 					}
 				}
@@ -358,11 +345,6 @@
 
 					// converting json to xml
 					let extractedFieldsXML = this.generateXML(extractedFields)
-
-					// let builder = new xml2js.Builder();
-					// // let extractedFieldsXML = builder.buildObject(extractedFields);
-					// let extractedFieldsXML = builder.buildObject(JSON.parse(JSON.stringify(extractedFields)));
-					
 					
 					this.requestedLanguages.forEach(async (requestedLanguage) => {
 						const response = await deepLTranslate(
@@ -376,15 +358,6 @@
 							// converting xml to json
 							let convertedXml = this.convertXMLToJSON(response.translations[0].text,extractedFields)
 
-							// xml2js.parseString(
-							// 	response.translations[0].text,
-							// 	(err, result) => {
-							// 		if (err) throw err;
-							// 		json = JSON.parse(JSON.stringify(result, null, 4));
-							// 	}
-							// );
-							// console.log('convertedXml', convertedXml)
-	
 							storyObject = await updateStory( this.$route.query.space_id, this.story.id, 
 																  JSON.parse(this.updatingStoryContents( storyJson, storyObject,
 																										 requestedLanguage, convertedXml )));

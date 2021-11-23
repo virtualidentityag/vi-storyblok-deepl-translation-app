@@ -96,6 +96,7 @@ export const  updateStory = async (spaceId, storyId, story) => {
     console.log("updated response", response);
     return response;
 }
+
 // export const  updateStory = async (spaceId, storyId, story) => {
 //     const response = await Storyblok.put(
 //         `spaces/${spaceId}/stories/${storyId}/import.json`,{
