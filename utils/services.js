@@ -1,4 +1,3 @@
-import axios from 'axios';
 import Storyblok from "./Storyblok-config";
 
 export const fetchDataSources = async (spaceId) => {
@@ -45,39 +44,6 @@ export const createDataSourceEntry = async (spaceId, dataSourceId) => {
 
 
 export const fetchStory = async (spaceId, storyId, language) => {
-    // let getStoryObj =  await axios.get(`spaces/${spaceId}/stories/${storyId}`,{})
-
-    // let getStoryJSON = await axios.get(`spaces/${spaceId}/stories/${storyId}/export.json`,{})
-    //       //   language !== "" && language !== "Default Language" ? {lang_code: language} : {}
-    
-    // let getStoryJSONWithLang = await axios.get(`spaces/${spaceId}/stories/${storyId}/export.json`, {lang_code: language})
-
-    // let responses = await axios
-    //                     .all([getStoryObj, getStoryJSON, getStoryJSONWithLang])
-    //                     .then(
-    //                         axios.spread((...responses) => {
-    //                         getStoryObj = responses[0].data.story;
-    //                         getStoryJSON = responses[1];
-    //                         getStoryJSONWithLang = responses[2];
-    //                         // const responseOne = responses[0];
-    //                         // const responseTwo = responses[1];
-    //                         // const responesThree = responses[2];
-                        
-    //                         // use/access the results
-    //                         // console.log('responseOne',responseOne);
-    //                         // console.log('responseTwo',responseTwo);
-    //                         // console.log('responesThree',responesThree);
-    //                         })
-    //                     )
-    //                     .catch(errors => {
-    //                         // react on errors.
-    //                         console.error(errors);
-    //                     });
-
-    // console.log('responseOne', responses.getStoryObj);
-    // console.log('responseTwo', responses.getStoryJSON);
-    // console.log('responesThree', responses.getStoryJSONWithLang);
-
     const storyObj = await Storyblok.get(
         `spaces/${spaceId}/stories/${storyId}`,{})
         .then((response) => {
@@ -88,8 +54,7 @@ export const fetchStory = async (spaceId, storyId, language) => {
         });
 
     const storyJSON = await Storyblok.get(
-        `spaces/${spaceId}/stories/${storyId}/export.json`,
-        {}
+        `spaces/${spaceId}/stories/${storyId}/export.json`, {}
         //   language !== "" && language !== "Default Language" ? {lang_code: language} : {}
         )
         .then((response) => {
@@ -131,6 +96,7 @@ export const  updateStory = async (spaceId, storyId, story) => {
     console.log("updated response", response);
     return response;
 }
+
 // export const  updateStory = async (spaceId, storyId, story) => {
 //     const response = await Storyblok.put(
 //         `spaces/${spaceId}/stories/${storyId}/import.json`,{
