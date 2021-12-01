@@ -16,7 +16,7 @@
 			<el-row>
 				<p>Translate Into: (required)</p>
 
-				<el-checkbox-group v-for="locale in availableLanguages" :key="locale.lang" v-model="requestedLanguages">
+				<el-checkbox-group v-for="locale in availableLanguages" :disabled='invalidKey' :key="locale.lang" v-model="requestedLanguages">
 					<el-checkbox :label="locale.lang"> {{getAvailableLanguagesName(locale.lang)}} </el-checkbox>
 				</el-checkbox-group>
 			</el-row>
@@ -186,34 +186,63 @@
 				return splittedString.reduce((previousValue, currentValue) => previousValue.trim() + '_' + currentValue.trim())
 			},
 
-			generateXML(arr){
+			generateXML(obj){
 				let str = ''
-				for(let i = 0; i < arr.length; i++){
-					console.log(arr[i])
-					for(let key in arr[i]){
-						str+= `${'<'+[key]+'>'+[arr[i][key]]+'</'+[key]+'>'}`
-					}
+				// for(let i = 0; i < arr.length; i++){
+				// 	// console.log(arr[i])
+				// 	for(let key in arr[i]){
+				// 		str+= `${'<'+[key]+'>'+[arr[i][key]]+'</'+[key]+'>'}`
+				// 	}
+				// }
+
+				for(let key in obj){
+					str+= `${'<'+[key]+'>'+[obj[key]]+'</'+[key]+'>'}`
 				}
 
 				return str;
 			},
 			convertXMLToJSON(xml,extractedFields){
-				let arr = []
+				// let arr = []
+				let arr = {}
 
-				for(let i = 0; i < extractedFields.length; i++){
-					let key = xml.substring(xml.indexOf('<')+1, xml.indexOf('>'))
-					let value = xml.substring(xml.indexOf('>')+1, xml.indexOf('</'))
+				// for(let i = 0; i < extractedFields.length; i++){
+				// 	let key = xml.substring(xml.indexOf('<')+1, xml.indexOf('>'))
+				// 	let value = xml.substring(xml.indexOf('>')+1, xml.indexOf('</'))
+
+				// 	xml = xml.substring(xml.indexOf('><')+1, xml.length)
+
+				// 	// arr.push({[key]: value})
+				// 	Object.assign(arr,{[key]: value})
+				// }
+
+				for (let key in extractedFields) {
+					console.log('key', key, extractedFields[key])
+					let _key = xml.substring(xml.indexOf('<')+1, xml.indexOf('>'))
+					let _value = xml.substring(xml.indexOf('>')+1, xml.indexOf('</'))
 
 					xml = xml.substring(xml.indexOf('><')+1, xml.length)
 
-					arr.push({[key]: value})
+					// let removed = _value.replace(/("\\")|(\\"")/g,`"`)
+					// let removed = _value.replace(/("\\")/g,`"`)
+					let removed = JSON.stringify(_value).replace(`"\"`,`"`)
+					    removed = removed.replace(`\""`,`"`)
+					// let removed = _value.replace(`""`,`"`)
+					console.log('value', _value)
+					// console.log('value', JSON.parse(removed))
+					Object.assign(arr,{[_key]: _value})
+					// if(_value.length > 1)
+					// 	Object.assign(arr,{[_key]: _value.slice(1,_value.length - 1)})
+					// else
+					// 	Object.assign(arr,{[_key]: JSON.parse(_value)})
+					// Object.assign(arr,{[_key]: _value.replace(/\\"/g, '')})
 				}
+
 				return arr;
 			},
 
 			// extracts the fields from story object with the help of story json returned by export.json api
 			extractingFields(storyJson,storyObject) {
-				let splitArray = [];
+				let splitArray = {};
 
 				for (let keys in storyJson) {
 					let extracted = keys.split(":"); // splitting e.g {4e272c60-a59e-4c1d-b7bc-115b920588e6:button:text: "Call to action"} in 3 parts
@@ -238,7 +267,9 @@
 							let strKey 	 = splitStr[0].substring(0, splitStr[0].indexOf(":"));
 							let strValue = splitStr[0].substring( splitStr[0].indexOf(":") + 1);
 							
-							splitArray.push({ [`${JSON.parse(strKey)}`]: JSON.parse(strValue) }); // creating an array of translatable fields
+							// splitArray.push({ [`${JSON.parse(strKey)}`]: JSON.parse(strValue) }); // creating an array of translatable fields
+							// splitArray.push({ [`${keys}`]: JSON.parse(strValue) }); // creating an array of translatable fields
+							Object.assign(splitArray, { [`${keys}`]: JSON.parse(strValue) }); // creating an array of translatable fields
 						}
 					}
 				}
@@ -315,6 +346,11 @@
 				return translatedStoryObj;
 			},
 
+			// containsTranslatableFields(){
+			// 	for()
+			// },
+
+
 			// storyJsonWithLang only contains the translatable fields
 			// both objects are being compared and key which are not present in storyJsonWithLang are being removed from storyJson
 			removeUnwanted(storyJson, storyJsonWithLang){
@@ -331,20 +367,24 @@
 
 			async sendTranslationRequest() {
 				if(this.requestedLanguages.length > 0){ 
-					let json = "";
-					let updatedStory = await fetchStory(this.$route.query.space_id,this.story.id, this.availableLanguages[0].lang);
+					
+					let updatedStory = await fetchStory(this.$route.query.space_id,this.story.id, this.availableLanguages[1].lang);
 					let storyObject = updatedStory.storyObj
 					let storyJson = this.removeUnwanted(updatedStory.storyJSON,  updatedStory.storyJSONWithLang)
 					
-					let extractedFields = [];
+					//let extractedFields = Array.from(this.extractingFields(storyJson, storyObject))
+					let extractedFields = {...this.extractingFields(storyJson, storyObject)}
+					
 					let sourceLanguage = this.currentLanguage !== "Default Language" ? this.currentLanguage.split("-")[0].toUpperCase() : ""
 	
 					// console.log('storyJSON', storyJson);
-					extractedFields = Array.from(this.extractingFields(storyJson, storyObject))
+					
 					console.log('extractedFields', extractedFields);
 
 					// converting json to xml
 					let extractedFieldsXML = this.generateXML(extractedFields)
+					// let extractedFieldsXML = this.generateXML(storyJson)
+					console.log("extractedXML", extractedFieldsXML)
 					
 					this.requestedLanguages.forEach(async (requestedLanguage) => {
 						const response = await deepLTranslate(
@@ -354,13 +394,28 @@
 											this.apiKey,
 										);
 						if (response) {
+							
+							let convertedXml = {
+								// ...this.convertXMLToJSON(response.translations[0].text,updatedStory.storyJSONWithLang), 
+								...this.convertXMLToJSON(response.translations[0].text, extractedFields), 
+								language: requestedLanguage,
+								page: this.story.id+"",
+								text_nodes: JSON.parse(storyJson.text_nodes),
+								url: JSON.parse(storyJson.url)
+							}
+							// let convertedXml = this.convertXMLToJSON(response.translations[0].text, updatedStory.storyJSONWithLang)
+							// let convertedXml = this.convertXMLToJSON(response.translations[0].text, extractedFields)
+							console.log(convertedXml)
+							
+							// 	console.log('convertedXML', convertedXml)
+							// 	console.log('convertedXML', JSON.stringify(convertedXml))
 
-							// converting xml to json
-							let convertedXml = this.convertXMLToJSON(response.translations[0].text,extractedFields)
+							
+							storyObject = await updateStory( this.$route.query.space_id, this.story.id, JSON.stringify(convertedXml),requestedLanguage);
 
-							storyObject = await updateStory( this.$route.query.space_id, this.story.id, 
-																  JSON.parse(this.updatingStoryContents( storyJson, storyObject,
-																										 requestedLanguage, convertedXml )));
+							// storyObject = await updateStory( this.$route.query.space_id, this.story.id, 
+							// 									  JSON.parse(this.updatingStoryContents( storyJson, storyObject,
+							// 																			 requestedLanguage, convertedXml )));
 						
 							if(storyObject)
 								this.successMessage();
