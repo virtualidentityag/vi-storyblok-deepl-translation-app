@@ -150,7 +150,6 @@
 				}
 				else{
 					let key = entry.data.datasource_entries.find(element => element.name === "Deepl-Api-key")
-					// console.log('key', key, entry);
 
 					if(key){
 						if(key.value !== "Enter-Api-Key-Here"){
@@ -162,7 +161,6 @@
 					}
 					else{
 						let datasource = await fetchDataSources(this.$route.query.space_id)
-							// console.log('DataSource', datasource)
 
 						if(datasource){
 							let dataSourceId = datasource.data.datasources.find(element => element.slug === "deepl-api-key").id
@@ -188,12 +186,6 @@
 
 			generateXML(obj){
 				let str = ''
-				// for(let i = 0; i < arr.length; i++){
-				// 	// console.log(arr[i])
-				// 	for(let key in arr[i]){
-				// 		str+= `${'<'+[key]+'>'+[arr[i][key]]+'</'+[key]+'>'}`
-				// 	}
-				// }
 
 				for(let key in obj){
 					str+= `${'<'+[key]+'>'+[obj[key]]+'</'+[key]+'>'}`
@@ -202,18 +194,7 @@
 				return str;
 			},
 			convertXMLToJSON(xml,extractedFields){
-				// let arr = []
-				let arr = {}
-
-				// for(let i = 0; i < extractedFields.length; i++){
-				// 	let key = xml.substring(xml.indexOf('<')+1, xml.indexOf('>'))
-				// 	let value = xml.substring(xml.indexOf('>')+1, xml.indexOf('</'))
-
-				// 	xml = xml.substring(xml.indexOf('><')+1, xml.length)
-
-				// 	// arr.push({[key]: value})
-				// 	Object.assign(arr,{[key]: value})
-				// }
+				let obj = {}
 
 				for (let key in extractedFields) {
 					console.log('key', key, extractedFields[key])
@@ -222,22 +203,13 @@
 
 					xml = xml.substring(xml.indexOf('><')+1, xml.length)
 
-					// let removed = _value.replace(/("\\")|(\\"")/g,`"`)
-					// let removed = _value.replace(/("\\")/g,`"`)
 					let removed = JSON.stringify(_value).replace(`"\"`,`"`)
 					    removed = removed.replace(`\""`,`"`)
-					// let removed = _value.replace(`""`,`"`)
-					console.log('value', _value)
-					// console.log('value', JSON.parse(removed))
-					Object.assign(arr,{[_key]: _value})
-					// if(_value.length > 1)
-					// 	Object.assign(arr,{[_key]: _value.slice(1,_value.length - 1)})
-					// else
-					// 	Object.assign(arr,{[_key]: JSON.parse(_value)})
-					// Object.assign(arr,{[_key]: _value.replace(/\\"/g, '')})
+
+					Object.assign(obj,{[_key]: _value})
 				}
 
-				return arr;
+				return obj;
 			},
 
 			// extracts the fields from story object with the help of story json returned by export.json api
@@ -267,8 +239,6 @@
 							let strKey 	 = splitStr[0].substring(0, splitStr[0].indexOf(":"));
 							let strValue = splitStr[0].substring( splitStr[0].indexOf(":") + 1);
 							
-							// splitArray.push({ [`${JSON.parse(strKey)}`]: JSON.parse(strValue) }); // creating an array of translatable fields
-							// splitArray.push({ [`${keys}`]: JSON.parse(strValue) }); // creating an array of translatable fields
 							Object.assign(splitArray, { [`${keys}`]: JSON.parse(strValue) }); // creating an array of translatable fields
 						}
 					}
@@ -346,10 +316,6 @@
 				return translatedStoryObj;
 			},
 
-			// containsTranslatableFields(){
-			// 	for()
-			// },
-
 
 			// storyJsonWithLang only contains the translatable fields
 			// both objects are being compared and key which are not present in storyJsonWithLang are being removed from storyJson
@@ -372,18 +338,15 @@
 					let storyObject = updatedStory.storyObj
 					let storyJson = this.removeUnwanted(updatedStory.storyJSON,  updatedStory.storyJSONWithLang)
 					
-					//let extractedFields = Array.from(this.extractingFields(storyJson, storyObject))
 					let extractedFields = {...this.extractingFields(storyJson, storyObject)}
 					
 					let sourceLanguage = this.currentLanguage !== "Default Language" ? this.currentLanguage.split("-")[0].toUpperCase() : ""
-	
-					// console.log('storyJSON', storyJson);
 					
 					console.log('extractedFields', extractedFields);
 
 					// converting json to xml
 					let extractedFieldsXML = this.generateXML(extractedFields)
-					// let extractedFieldsXML = this.generateXML(storyJson)
+					
 					console.log("extractedXML", extractedFieldsXML)
 					
 					this.requestedLanguages.forEach(async (requestedLanguage) => {
@@ -396,26 +359,15 @@
 						if (response) {
 							
 							let convertedXml = {
-								// ...this.convertXMLToJSON(response.translations[0].text,updatedStory.storyJSONWithLang), 
+								
 								...this.convertXMLToJSON(response.translations[0].text, extractedFields), 
 								language: requestedLanguage,
 								page: this.story.id+"",
 								text_nodes: JSON.parse(storyJson.text_nodes),
 								url: JSON.parse(storyJson.url)
 							}
-							// let convertedXml = this.convertXMLToJSON(response.translations[0].text, updatedStory.storyJSONWithLang)
-							// let convertedXml = this.convertXMLToJSON(response.translations[0].text, extractedFields)
-							console.log(convertedXml)
-							
-							// 	console.log('convertedXML', convertedXml)
-							// 	console.log('convertedXML', JSON.stringify(convertedXml))
-
 							
 							storyObject = await updateStory( this.$route.query.space_id, this.story.id, JSON.stringify(convertedXml),requestedLanguage);
-
-							// storyObject = await updateStory( this.$route.query.space_id, this.story.id, 
-							// 									  JSON.parse(this.updatingStoryContents( storyJson, storyObject,
-							// 																			 requestedLanguage, convertedXml )));
 						
 							if(storyObject)
 								this.successMessage();
