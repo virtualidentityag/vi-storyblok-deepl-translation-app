@@ -214,7 +214,7 @@
 
 			// extracts the fields from story object with the help of story json returned by export.json api
 			extractingFields(storyJson,storyObject) {
-				let splitArray = {};
+				let splittedValues = {};
 
 				for (let keys in storyJson) {
 					let extracted = keys.split(":"); // splitting e.g {4e272c60-a59e-4c1d-b7bc-115b920588e6:button:text: "Call to action"} in 3 parts
@@ -239,12 +239,12 @@
 							let strKey 	 = splitStr[0].substring(0, splitStr[0].indexOf(":"));
 							let strValue = splitStr[0].substring( splitStr[0].indexOf(":") + 1);
 							
-							Object.assign(splitArray, { [`${keys}`]: JSON.parse(strValue) }); // creating an array of translatable fields
+							Object.assign(splittedValues, { [`${keys}`]: JSON.parse(strValue) }); // creating an object of translatable fields
 						}
 					}
 				}
 
-				return splitArray
+				return splittedValues
 			},
 
 			//updating the story with translated content using the same process used in extraction 
