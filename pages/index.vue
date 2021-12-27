@@ -58,6 +58,11 @@
 				loadingContext: true,
 				invalidKey: true,
 				languagesAvailable: false,
+				// loadingContext: false,
+				// invalidKey: false,
+				// languagesAvailable: true,
+				// currentLanguage: "de-de",
+				// currentLanguage: "fr",
 				currentLanguage: "",
 				apiKey: "",
 				availableLanguages: [],
@@ -68,16 +73,16 @@
 		mounted() {
 			
 			if (window.top === window.self) {
-				window.location.assign("https://app.storyblok.com/oauth/tool_redirect");
+				window.location.assign("http://app.storyblok.com/oauth/tool_redirect");
 			}
 
 			window.addEventListener("message", this.processMessage, false);
 
-			// Use getContext to get the current story
+			//Use getContext to get the current story
 			window.parent.postMessage(
 				{
 					action: "tool-changed",
-					tool: "virtual-identity-ag@example-tool-app",
+					tool: "virtual-identity-ag@auto-translations-app",
 					event: "getContext",
 				},
 				"https://app.storyblok.com"
@@ -87,7 +92,7 @@
 			window.parent.postMessage(
 				{
 					action: "tool-changed",
-					tool: "virtual-identity-ag@example-tool-app",
+					tool: "virtual-identity-ag@auto-translations-app",
 					event: "heightChange",
 					height: 500,
 				},
@@ -100,7 +105,7 @@
 		methods: {
 			// to get the current story once app is loaded
 			processMessage(event) {
-				// console.log('event outside', event)
+				console.log('event outside', event)
 				if (event.data && event.data.action == "get-context") {
 					console.log('event', event)
 					this.loadingContext = false;
@@ -216,104 +221,148 @@
 			extractingFields(storyJson,storyObject) {
 				let splittedValues = {};
 
+				let languageStr = this.currentLanguage === "Default Language" ? "" : `__i18n__${this.transformLanguageString(this.currentLanguage)}`
+
 				for (let keys in storyJson) {
 					let extracted = keys.split(":"); // splitting e.g {4e272c60-a59e-4c1d-b7bc-115b920588e6:button:text: "Call to action"} in 3 parts
-					let splitStr = "";
-					
+					let splitStr = [];
+					let keyBackUp = ""
+					// console.log('keys', keys)
 					if (extracted.length > 1 ) {
 
-						splitStr = JSON.stringify(storyObject).slice(JSON.stringify(storyObject).indexOf(extracted[0])); //splitting the object from _uid and further
-					
-						if (splitStr.indexOf(extracted[1]) < splitStr.indexOf(extracted[2])) { //making sure to further extract on correct positions
-							splitStr = splitStr.slice(splitStr.indexOf(`"${extracted[1]}"`));
-							splitStr = splitStr.slice(splitStr.indexOf(`"${extracted[2]}"`));
-						} 
-						else
-							splitStr = splitStr.slice(splitStr.indexOf(`"${extracted[2]}":${storyJson[keys]}`));
+						// splitStr = JSON.stringify(storyObject).slice(JSON.stringify(storyObject).indexOf(extracted[0])); //splitting the object from _uid and further
+						splitStr = Array.from(storyObject.content.body) //splitting the object from _uid and further
+					    // console.log('splitStr before', splitStr)
+						// if (splitStr.indexOf(extracted[1]) < splitStr.indexOf(extracted[2])) { //making sure to further extract on correct positions
+						// 	splitStr = splitStr.slice(splitStr.indexOf(`"${extracted[1]}"`));
+						// 	splitStr = splitStr.slice(splitStr.indexOf(`"${extracted[2]}"`));
+						// } 
+						// else
+						// 	splitStr = splitStr.slice(splitStr.indexOf(`"${extracted[2]}":${storyJson[keys]}`));
 
-						splitStr = splitStr.match(/[^\[](.*)[^\]]/g); // cleaning the string
+						// splitStr = splitStr.reduce((previousValue, currentValue) => {
+						// 	if(JSON.stringify(previousValue).includes(extracted[0])) return previousValue;
+						// 	else return currentValue
+						// })
+
+						do{
+							// if(splitStr.component ===  extracted[1]){
+							// 	console.log('FOUND', splitStr[`${extracted[2]}${languageStr}`])
+							// 	break;
+							// }
+							// else{
+								let existInKey = ""
+								if(keyBackUp !== "")
+									splitStr = splitStr[keyBackUp]
+
+								// console.log('splitStr', splitStr)
+								splitStr = splitStr.reduce((previousValue, currentValue) => {
+									if(JSON.stringify(previousValue).includes(extracted[0])) return previousValue;
+									else return currentValue
+								})
+								// console.log('splitStr', splitStr)
+
+								if(splitStr.component !== extracted[1]){
+									for(let _keys in splitStr){
+										if(JSON.stringify(splitStr[_keys]).includes(extracted[1])){
+											existInKey = _keys;
+											break;
+										}
+									}
+								}
+								
+								// console.log('existInKey',existInKey)
+
+								if(!Array.isArray(splitStr[existInKey]) && typeof splitStr[existInKey] === 'object' )
+									if(splitStr._uid == extracted[0] && splitStr.component ==  extracted[1])
+										break;
+
+								if(splitStr._uid == extracted[0])
+									extracted[0] = extracted[1]
+
+								keyBackUp = existInKey
+								// splitStr = splitStr[existInKey]
+							// }
+						}while(splitStr.component !==  extracted[1])
+						
+						console.log('FOUND',keys,': ',splitStr[`${extracted[2]}${languageStr}`])
+
+						// do{
+						// 	if(splitStr.component ===  extracted[1]){
+						// 		console.log('FOUND', splitStr[`${extracted[2]}${languageStr}`])
+						// 		break;
+						// 	}
+						// 	else{
+								
+						// 	let existInKey = ""
+
+							// for(let _keys in splitStr){
+							// 	if(JSON.stringify(splitStr[_keys]).includes(extracted[1])){
+							// 		existInKey = _keys;
+							// 		break;
+							// 	}
+							// }
+						// 	console.log('exisIntKey', existInKey)
+						// 	console.log('typeOf', typeof splitStr[existInKey] )
+							
+						// 	if(Array.isArray(splitStr[existInKey])){
+						// 		console.log('splitStr TypeOf', splitStr[existInKey])
+							
+						// 		splitStr = splitStr[existInKey].reduce((previousValue, currentValue) => {
+						// 			if(JSON.stringify(previousValue).includes(extracted[1])) return previousValue;
+						// 			else return currentValue
+						// 		})
+
+						// 	}
+						// 	else if(typeof splitStr[existInKey] === 'object'){
+
+						// 	}
+						// }
+
+						// }while(splitStr.component !==  extracted[1])
+
+
+						// console.log('splitted', splitStr)
+
+						// if (splitStr.indexOf(extracted[1]) < splitStr.indexOf(`"${extracted[2]}${languageStr}"`)) { //making sure to further extract on correct positions
+						// 	console.log('if')
+						// 	// console.log('splitStr before', splitStr)
+						// 	splitStr = splitStr.slice(splitStr.indexOf(`"${extracted[1]}"`));
+						// 	splitStr = splitStr.slice(splitStr.indexOf(`"${extracted[2]}${languageStr}"`));
+						// 	// splitStr = splitStr.replace(/[\])}[{(]/g,'').slice(splitStr.indexOf(`"${extracted[2]}${languageStr}"`,`","`))
+						// 	// console.log('splitStr', splitStr)
+						// } 
+						// else{
+						// 	console.log('else')
+						// 	// console.log('spliStraaa',`${storyJson[keys]}`)
+						// 	// console.log('spliStr before',splitStr)
+						// 	// splitStr = splitStr.slice(splitStr.indexOf(`"${extracted[2]}${languageStr}":${storyJson[keys]}`,`\"`));
+						// 	splitStr = splitStr.slice(splitStr.indexOf(`"${extracted[2]}${languageStr}"`,`","`));
+						// 	// splitStr = splitStr.replace(/[\])}[{(]/g,'').slice(splitStr.indexOf(`"${extracted[2]}${languageStr}"`,`","`))
+						// 	// console.log('splitted', splitStr)
+						// }
+						// console.log('splitted before match', splitStr)
+						// splitStr = splitStr.match(/[^\[](.*)[^\]]/g); // original cleaning the string
+						// splitStr = splitStr.replace(/[&\/\\#,+()$~%.'"*?<>{}[]]/g,''); // cleaning the string
+						// splitStr = splitStr.replace(/[\])}[{(]/g,''); // cleaning the string
+						// splitStr = splitStr.match(/[^\[](.*)[^\]]/g); 
+						// // console.log('splittedMatched', splitStr)
 
 						if (splitStr) {
 							
-							splitStr 	 = splitStr.toString().split(`,"`);
-							let strKey 	 = splitStr[0].substring(0, splitStr[0].indexOf(":"));
-							let strValue = splitStr[0].substring( splitStr[0].indexOf(":") + 1);
+							// splitStr 	 = splitStr.toString().split(`,"`);
+							// let strKey 	 = splitStr[0].substring(0, splitStr[0].indexOf(":"));
+							// let strValue = splitStr[0].substring( splitStr[0].indexOf(":") + 1);
 							
-							Object.assign(splittedValues, { [`${keys}`]: JSON.parse(strValue) }); // creating an object of translatable fields
+							// Object.assign(splittedValues, { [`${keys}`]: JSON.parse(strValue) }); // creating an object of translatable fields
+							// Object.assign(splittedValues, { [`${keys}`]: JSON.parse(splitStr[`${extracted[2]}${languageStr}`]) }); // creating an object of translatable fields
+							Object.assign(splittedValues, { [`${keys}`]: splitStr[`${extracted[2]}${languageStr}`] }); // creating an object of translatable fields
+							// Object.assign(splittedValues, { [`${keys}`]: strValue }); // creating an object of translatable fields
 						}
 					}
 				}
 
 				return splittedValues
-			},
-
-			//updating the story with translated content using the same process used in extraction 
-			updatingStoryContents(storyJson, storyObject, requestedLanguage, translatedJson){
-				let splitingResponse = "";
-				let firstHalfStr = "";
-				let secondHalfStr = "";
-				let fullStr = '';
-				let translatedStoryObj = JSON.stringify(storyObject)
-
-				for (let keys in storyJson) {
-					let extracted = keys.split(":");
-
-					if (extracted.length > 1 ) {
-
-						splitingResponse = translatedStoryObj.split(`"${extracted[0]}"`);
-						
-						firstHalfStr  = splitingResponse[1].substring(0,splitingResponse[1].indexOf(`"${extracted[2]}":"${storyJson[keys]}"`));
-						secondHalfStr = splitingResponse[1].substring( splitingResponse[1].indexOf(`"${extracted[2]}":"${storyJson[keys]}"`));
-					
-						// checking if the field name already exist with i81n code, so it can be replaced and a new one can be added for updated content
-						if (JSON.stringify(secondHalfStr).includes(`${extracted[2]}__i18n__${this.transformLanguageString(requestedLanguage)}`)) {
-							secondHalfStr = secondHalfStr.replace(`"${extracted[2]}__i18n__${this.transformLanguageString(requestedLanguage)}"`,
-																`"${extracted[2]}__i18n__XXXX${this.transformLanguageString(requestedLanguage)}"`)
-						}
-
-							for (let _keys in translatedJson[0]) {
-
-								// making sure string is being concatinated on the correct position
-								if (_keys.localeCompare(extracted[2]) === Number(0)) {
-									
-									let value =  translatedJson[0][_keys];
-									let newObj = `"${_keys}__i18n__${this.transformLanguageString(requestedLanguage)}":${JSON.stringify(value)}`;
-
-									if(value.startsWith('"') && value.endsWith('"'))
-										newObj = `"${_keys}__i18n__${this.transformLanguageString(requestedLanguage)}":"\\${value}`; 
-									
-									fullStr = splitingResponse[0].concat(`"${extracted[0]}"`);
-								
-									if(!fullStr.endsWith(',')){ // trying to make the correct format of the json
-										fullStr = fullStr.concat(",");
-										
-										if(firstHalfStr.startsWith(','))
-											firstHalfStr = firstHalfStr.substring(1);
-									}
-
-									fullStr = fullStr.concat(firstHalfStr);
-									fullStr = fullStr.concat(newObj);
-
-									if(!fullStr.endsWith(',')){
-										fullStr = fullStr.concat(",")
-
-										if(secondHalfStr.startsWith(','))
-											secondHalfStr = secondHalfStr.substring(1);
-									}
-
-									fullStr = fullStr.concat(secondHalfStr);
-
-									// removing the key which has just been concatinated
-									if (translatedJson[0][_keys].length > 1) translatedJson.splice(0,1);
-
-									translatedStoryObj = fullStr;
-									break;
-								}
-						}
-					}
-				}	
-
-				return translatedStoryObj;
 			},
 
 
@@ -334,7 +383,8 @@
 			async sendTranslationRequest() {
 				if(this.requestedLanguages.length > 0){ 
 					
-					let updatedStory = await fetchStory(this.$route.query.space_id,this.story.id, this.availableLanguages[1].lang);
+					let updatedStory = await fetchStory(this.$route.query.space_id,this.story.id, this.availableLanguages[0].lang);
+					// let updatedStory = await fetchStory(this.$route.query.space_id,this.story.id, this.availableLanguages[1]);
 					let storyObject = updatedStory.storyObj
 					let storyJson = this.removeUnwanted(updatedStory.storyJSON,  updatedStory.storyJSONWithLang)
 					
@@ -344,7 +394,7 @@
 					
 					console.log('extractedFields', extractedFields);
 
-					// converting json to xml
+					// // converting json to xml
 					let extractedFieldsXML = this.generateXML(extractedFields)
 					
 					console.log("extractedXML", extractedFieldsXML)
@@ -362,12 +412,15 @@
 								
 								...this.convertXMLToJSON(response.translations[0].text, extractedFields), 
 								language: requestedLanguage,
+								// language: "default",
 								page: this.story.id+"",
 								text_nodes: JSON.parse(storyJson.text_nodes),
 								url: JSON.parse(storyJson.url)
 							}
 							
+							console.log('converted xml', convertedXml)
 							storyObject = await updateStory( this.$route.query.space_id, this.story.id, JSON.stringify(convertedXml),requestedLanguage);
+							// storyObject = await updateStory( this.$route.query.space_id, this.story.id, JSON.stringify(convertedXml), "");
 						
 							if(storyObject)
 								this.successMessage();
