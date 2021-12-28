@@ -58,11 +58,6 @@
 				loadingContext: true,
 				invalidKey: true,
 				languagesAvailable: false,
-				// loadingContext: false,
-				// invalidKey: false,
-				// languagesAvailable: true,
-				// currentLanguage: "de-de",
-				// currentLanguage: "fr",
 				currentLanguage: "",
 				apiKey: "",
 				availableLanguages: [],
@@ -73,7 +68,7 @@
 		mounted() {
 			
 			if (window.top === window.self) {
-				window.location.assign("http://app.storyblok.com/oauth/tool_redirect");
+				window.location.assign("https://app.storyblok.com/oauth/tool_redirect");
 			}
 
 			window.addEventListener("message", this.processMessage, false);
@@ -202,7 +197,7 @@
 				let obj = {}
 
 				for (let key in extractedFields) {
-					console.log('key', key, extractedFields[key])
+					
 					let _key = xml.substring(xml.indexOf('<')+1, xml.indexOf('>'))
 					let _value = xml.substring(xml.indexOf('>')+1, xml.indexOf('</'))
 
@@ -219,150 +214,60 @@
 
 			// extracts the fields from story object with the help of story json returned by export.json api
 			extractingFields(storyJson,storyObject) {
-				let splittedValues = {};
+				let translatableContents = {};
 
 				let languageStr = this.currentLanguage === "Default Language" ? "" : `__i18n__${this.transformLanguageString(this.currentLanguage)}`
 
 				for (let keys in storyJson) {
 					let extracted = keys.split(":"); // splitting e.g {4e272c60-a59e-4c1d-b7bc-115b920588e6:button:text: "Call to action"} in 3 parts
-					let splitStr = [];
+					let extractedContent = [];
 					let keyBackUp = ""
-					// console.log('keys', keys)
+					
 					if (extracted.length > 1 ) {
-
-						// splitStr = JSON.stringify(storyObject).slice(JSON.stringify(storyObject).indexOf(extracted[0])); //splitting the object from _uid and further
-						splitStr = Array.from(storyObject.content.body) //splitting the object from _uid and further
-					    // console.log('splitStr before', splitStr)
-						// if (splitStr.indexOf(extracted[1]) < splitStr.indexOf(extracted[2])) { //making sure to further extract on correct positions
-						// 	splitStr = splitStr.slice(splitStr.indexOf(`"${extracted[1]}"`));
-						// 	splitStr = splitStr.slice(splitStr.indexOf(`"${extracted[2]}"`));
-						// } 
-						// else
-						// 	splitStr = splitStr.slice(splitStr.indexOf(`"${extracted[2]}":${storyJson[keys]}`));
-
-						// splitStr = splitStr.reduce((previousValue, currentValue) => {
-						// 	if(JSON.stringify(previousValue).includes(extracted[0])) return previousValue;
-						// 	else return currentValue
-						// })
+						
+						extractedContent = Array.from(storyObject.content.body) 
 
 						do{
-							// if(splitStr.component ===  extracted[1]){
-							// 	console.log('FOUND', splitStr[`${extracted[2]}${languageStr}`])
-							// 	break;
-							// }
-							// else{
-								let existInKey = ""
-								if(keyBackUp !== "")
-									splitStr = splitStr[keyBackUp]
+						
+							let existsInKeyName = ""
 
-								// console.log('splitStr', splitStr)
-								splitStr = splitStr.reduce((previousValue, currentValue) => {
-									if(JSON.stringify(previousValue).includes(extracted[0])) return previousValue;
-									else return currentValue
-								})
-								// console.log('splitStr', splitStr)
+							if(keyBackUp !== "")
+								extractedContent = extractedContent[keyBackUp]
 
-								if(splitStr.component !== extracted[1]){
-									for(let _keys in splitStr){
-										if(JSON.stringify(splitStr[_keys]).includes(extracted[1])){
-											existInKey = _keys;
-											break;
-										}
+							
+							extractedContent = extractedContent.reduce((previousValue, currentValue) => {
+								if(JSON.stringify(previousValue).includes(extracted[0])) return previousValue; //determining in which obj the _uid is present
+								else return currentValue
+							})
+
+							if(extractedContent.component !== extracted[1]){ //checking if we are in the correct obj, extracted¢[1] includes the name of the component
+								for(let _keys in extractedContent){
+									if(JSON.stringify(extractedContent[_keys]).includes(extracted[1])){ //determining if the object is further nested where out content is present
+										existsInKeyName = _keys;											//and the name of the key in which it is present
+										break;
 									}
 								}
-								
-								// console.log('existInKey',existInKey)
+							}
 
-								if(!Array.isArray(splitStr[existInKey]) && typeof splitStr[existInKey] === 'object' )
-									if(splitStr._uid == extracted[0] && splitStr.component ==  extracted[1])
-										break;
+							if(!Array.isArray(extractedContent[existsInKeyName]) && typeof extractedContent[existsInKeyName] === 'object' ) //if the key is the type of object {}
+								if(extractedContent._uid == extracted[0] && extractedContent.component ==  extracted[1])
+									break;
 
-								if(splitStr._uid == extracted[0])
-									extracted[0] = extracted[1]
+							if(extractedContent._uid == extracted[0]) //if _uid has been matched, copy the value of 2nd index to 1st since extracted[0] is being used above
+								extracted[0] = extracted[1]
 
-								keyBackUp = existInKey
-								// splitStr = splitStr[existInKey]
-							// }
-						}while(splitStr.component !==  extracted[1])
+							keyBackUp = existsInKeyName //creating a backup of existsInKeyName
+							
+						}while(extractedContent.component !==  extracted[1]) //loop until component name is not matched
 						
-						console.log('FOUND',keys,': ',splitStr[`${extracted[2]}${languageStr}`])
-
-						// do{
-						// 	if(splitStr.component ===  extracted[1]){
-						// 		console.log('FOUND', splitStr[`${extracted[2]}${languageStr}`])
-						// 		break;
-						// 	}
-						// 	else{
-								
-						// 	let existInKey = ""
-
-							// for(let _keys in splitStr){
-							// 	if(JSON.stringify(splitStr[_keys]).includes(extracted[1])){
-							// 		existInKey = _keys;
-							// 		break;
-							// 	}
-							// }
-						// 	console.log('exisIntKey', existInKey)
-						// 	console.log('typeOf', typeof splitStr[existInKey] )
-							
-						// 	if(Array.isArray(splitStr[existInKey])){
-						// 		console.log('splitStr TypeOf', splitStr[existInKey])
-							
-						// 		splitStr = splitStr[existInKey].reduce((previousValue, currentValue) => {
-						// 			if(JSON.stringify(previousValue).includes(extracted[1])) return previousValue;
-						// 			else return currentValue
-						// 		})
-
-						// 	}
-						// 	else if(typeof splitStr[existInKey] === 'object'){
-
-						// 	}
-						// }
-
-						// }while(splitStr.component !==  extracted[1])
-
-
-						// console.log('splitted', splitStr)
-
-						// if (splitStr.indexOf(extracted[1]) < splitStr.indexOf(`"${extracted[2]}${languageStr}"`)) { //making sure to further extract on correct positions
-						// 	console.log('if')
-						// 	// console.log('splitStr before', splitStr)
-						// 	splitStr = splitStr.slice(splitStr.indexOf(`"${extracted[1]}"`));
-						// 	splitStr = splitStr.slice(splitStr.indexOf(`"${extracted[2]}${languageStr}"`));
-						// 	// splitStr = splitStr.replace(/[\])}[{(]/g,'').slice(splitStr.indexOf(`"${extracted[2]}${languageStr}"`,`","`))
-						// 	// console.log('splitStr', splitStr)
-						// } 
-						// else{
-						// 	console.log('else')
-						// 	// console.log('spliStraaa',`${storyJson[keys]}`)
-						// 	// console.log('spliStr before',splitStr)
-						// 	// splitStr = splitStr.slice(splitStr.indexOf(`"${extracted[2]}${languageStr}":${storyJson[keys]}`,`\"`));
-						// 	splitStr = splitStr.slice(splitStr.indexOf(`"${extracted[2]}${languageStr}"`,`","`));
-						// 	// splitStr = splitStr.replace(/[\])}[{(]/g,'').slice(splitStr.indexOf(`"${extracted[2]}${languageStr}"`,`","`))
-						// 	// console.log('splitted', splitStr)
-						// }
-						// console.log('splitted before match', splitStr)
-						// splitStr = splitStr.match(/[^\[](.*)[^\]]/g); // original cleaning the string
-						// splitStr = splitStr.replace(/[&\/\\#,+()$~%.'"*?<>{}[]]/g,''); // cleaning the string
-						// splitStr = splitStr.replace(/[\])}[{(]/g,''); // cleaning the string
-						// splitStr = splitStr.match(/[^\[](.*)[^\]]/g); 
-						// // console.log('splittedMatched', splitStr)
-
-						if (splitStr) {
-							
-							// splitStr 	 = splitStr.toString().split(`,"`);
-							// let strKey 	 = splitStr[0].substring(0, splitStr[0].indexOf(":"));
-							// let strValue = splitStr[0].substring( splitStr[0].indexOf(":") + 1);
-							
-							// Object.assign(splittedValues, { [`${keys}`]: JSON.parse(strValue) }); // creating an object of translatable fields
-							// Object.assign(splittedValues, { [`${keys}`]: JSON.parse(splitStr[`${extracted[2]}${languageStr}`]) }); // creating an object of translatable fields
-							Object.assign(splittedValues, { [`${keys}`]: splitStr[`${extracted[2]}${languageStr}`] }); // creating an object of translatable fields
-							// Object.assign(splittedValues, { [`${keys}`]: strValue }); // creating an object of translatable fields
+						
+						if (extractedContent) {
+							Object.assign(translatableContents, { [`${keys}`]: extractedContent[`${extracted[2]}${languageStr}`] }); // creating an object of translatable fields
 						}
 					}
 				}
 
-				return splittedValues
+				return translatableContents
 			},
 
 
@@ -384,43 +289,33 @@
 				if(this.requestedLanguages.length > 0){ 
 					
 					let updatedStory = await fetchStory(this.$route.query.space_id,this.story.id, this.availableLanguages[0].lang);
-					// let updatedStory = await fetchStory(this.$route.query.space_id,this.story.id, this.availableLanguages[1]);
 					let storyObject = updatedStory.storyObj
 					let storyJson = this.removeUnwanted(updatedStory.storyJSON,  updatedStory.storyJSONWithLang)
-					
 					let extractedFields = {...this.extractingFields(storyJson, storyObject)}
-					
 					let sourceLanguage = this.currentLanguage !== "Default Language" ? this.currentLanguage.split("-")[0].toUpperCase() : ""
+					let extractedFieldsXML = this.generateXML(extractedFields) 					// converting json to xml
 					
-					console.log('extractedFields', extractedFields);
-
-					// // converting json to xml
-					let extractedFieldsXML = this.generateXML(extractedFields)
-					
-					console.log("extractedXML", extractedFieldsXML)
+					// console.log('extractedFields', extractedFields);
+					// console.log("extractedXML", extractedFieldsXML)
 					
 					this.requestedLanguages.forEach(async (requestedLanguage) => {
 						const response = await deepLTranslate(
-											extractedFieldsXML,
-											requestedLanguage.split("-")[0].trim(),
-											sourceLanguage,
-											this.apiKey,
+											extractedFieldsXML, requestedLanguage.split("-")[0].trim(),
+											sourceLanguage, this.apiKey,
 										);
+
 						if (response) {
 							
 							let convertedXml = {
-								
 								...this.convertXMLToJSON(response.translations[0].text, extractedFields), 
 								language: requestedLanguage,
-								// language: "default",
 								page: this.story.id+"",
 								text_nodes: JSON.parse(storyJson.text_nodes),
 								url: JSON.parse(storyJson.url)
 							}
 							
-							console.log('converted xml', convertedXml)
+							// console.log('converted xml', convertedXml)
 							storyObject = await updateStory( this.$route.query.space_id, this.story.id, JSON.stringify(convertedXml),requestedLanguage);
-							// storyObject = await updateStory( this.$route.query.space_id, this.story.id, JSON.stringify(convertedXml), "");
 						
 							if(storyObject)
 								this.successMessage();
