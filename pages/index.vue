@@ -14,9 +14,9 @@
 			<p>Content will be translated from: {{ getlangName(currentLanguage) }}</p>
 			
 			<el-row>
-				<p>Translate Into</p>
+				<p>Translate Into: (required)</p>
 
-				<el-checkbox-group v-for="locale in availableLanguages" :key="locale.lang" v-model="requestedLanguages">
+				<el-checkbox-group v-for="locale in availableLanguages" :disabled='invalidKey' :key="locale.lang" v-model="requestedLanguages">
 					<el-checkbox :label="locale.lang"> {{getAvailableLanguagesName(locale.lang)}} </el-checkbox>
 				</el-checkbox-group>
 			</el-row>
@@ -45,7 +45,6 @@
 </template>
 
 <script>
-	import xml2js from "xml2js";
 	import { Notification } from 'element-ui';
 	import { deepLTranslate } from './../utils/deepl-services'
 	import { fetchStory, createDataSource, createDataSourceEntry, updateStory, fetchDataSources } from '../utils/services'
@@ -67,8 +66,6 @@
 		},
 
 		mounted() {
-			console.log('Mounted!!')
-			// this.editorEvents()
 			
 			if (window.top === window.self) {
 				window.location.assign("https://app.storyblok.com/oauth/tool_redirect");
@@ -76,11 +73,11 @@
 
 			window.addEventListener("message", this.processMessage, false);
 
-			// Use getContext to get the current story
+			//Use getContext to get the current story
 			window.parent.postMessage(
 				{
 					action: "tool-changed",
-					tool: "virtual-identity-ag@example-tool-app",
+					tool: "virtual-identity-ag@auto-translations-app",
 					event: "getContext",
 				},
 				"https://app.storyblok.com"
@@ -90,7 +87,7 @@
 			window.parent.postMessage(
 				{
 					action: "tool-changed",
-					tool: "virtual-identity-ag@example-tool-app",
+					tool: "virtual-identity-ag@auto-translations-app",
 					event: "heightChange",
 					height: 500,
 				},
@@ -101,30 +98,7 @@
 		},
 
 		methods: {
-		
-			editorEvents(){
-				const storyblokInstance = new window.StoryblokBridge()
- 
-				storyblokInstance.on('input', (payload) => {
-					console.log('Content changed', payload.story.content)
-				// Handle re-rendering
-				})
-				
-				storyblokInstance.on('change', (payload) => {
-				// Load draft version of story
-				})
-				
-				// Call ping editor to see if in editor
-				storyblokInstance.pingEditor(() => {
-					if (storyblokInstance.isInEditor()) {
-						// Load draft version of story
-						console.log('draft')
-					} else {
-						// Load published version of story
-						console.log('published')
-					}
-				})
-			},
+			// to get the current story once app is loaded
 			processMessage(event) {
 				console.log('event outside', event)
 				if (event.data && event.data.action == "get-context") {
@@ -132,20 +106,16 @@
 					this.loadingContext = false;
 					this.story = event.data.story;
 					this.currentLanguage = event.data.language !== "" ? event.data.language : "Default Language";
-					// this.currentLanguage = event.data.language !== "" ? event.data.language : "EN-EN";
-
 					
 					if(event.data.story.localized_paths.length > 0){
 						this.languagesAvailable = true
 						this.availableLanguages = Array.from(event.data.story.localized_paths);
 					}
 
-					console.log("event.data.story.localized_paths", event.data.story.localized_paths);
-					console.log("story", event.data.story);
-					console.log(".data", event.data.language);
 				}
 			},
 
+			// return language name for the given code
 			getlangName(langCode){
 				if(langCode !== "Default Language")
 					return languageCodes.find(lang => lang.code === langCode).name
@@ -155,10 +125,7 @@
 
 			getAvailableLanguagesName(code){ return code + " - " + this.getlangName(code);},
 			
-			getRoute(){ 
-				console.log('this.$route ', window.location)
-			},
-
+			//fetch api key saved in data entries, if not then it creates an entry
 			async fetchDataSourceEntries() {
 				let entry = await Storyblok.get(`spaces/${this.$route.query.space_id}/datasource_entries`, {
 									"datasource_slug": "deepl-api-key"
@@ -183,7 +150,6 @@
 				}
 				else{
 					let key = entry.data.datasource_entries.find(element => element.name === "Deepl-Api-key")
-					console.log('key', key, entry);
 
 					if(key){
 						if(key.value !== "Enter-Api-Key-Here"){
@@ -195,7 +161,6 @@
 					}
 					else{
 						let datasource = await fetchDataSources(this.$route.query.space_id)
-							console.log('DataSource', datasource)
 
 						if(datasource){
 							let dataSourceId = datasource.data.datasources.find(element => element.slug === "deepl-api-key").id
@@ -213,118 +178,117 @@
 				}
 			},
 
-
+			
 			transformLanguageString(languageString){
 				const splittedString = languageString.split('-')
-				// console.log('splitteedString', splittedString, languageString)
 				return splittedString.reduce((previousValue, currentValue) => previousValue.trim() + '_' + currentValue.trim())
 			},
 
-			extractingFields(storyJson,storyObject) {
-				let splitArray = [];
+			generateXML(obj){
+				let str = ''
 
-				for (let keys in storyJson) {
-					let extracted = keys.split(":");
-					let splitStr = "";
-					// console.log('length = ', extracted.length, extracted)
-					// if (extracted.length > 1 && extracted.length < 4) {
-
-						splitStr = JSON.stringify(storyObject).slice(JSON.stringify(storyObject).indexOf(extracted[0]));
-
-					
-						if (splitStr.indexOf(extracted[1]) < splitStr.indexOf(extracted[2])) {
-							splitStr = splitStr.slice(splitStr.indexOf(`"${extracted[1]}"`));
-							splitStr = splitStr.slice(splitStr.indexOf(`"${extracted[2]}"`));
-						} 
-						else 
-							splitStr = splitStr.slice(splitStr.indexOf(`"${extracted[2]}":"${storyJson[keys]}"`));
-
-						splitStr = splitStr.match(/[^\[](.*)[^\]]/g);
-
-						if (splitStr) {
-							// console.log('splitStr!!!!!!!', splitStr);
-							splitStr 	 = splitStr.toString().split(`,"`);
-							let strKey 	 = splitStr[0].substring(0, splitStr[0].indexOf(":"));
-							let strValue = splitStr[0].substring( splitStr[0].indexOf(":") + 1);
-							console.log('strKey', strKey);
-							console.log('strValue', strValue);
-							splitArray.push({ [JSON.parse(strKey)]: JSON.parse(strValue) });
-						}
-					// }
+				for(let key in obj){
+					str+= `${'<'+[key]+'>'+[obj[key]]+'</'+[key]+'>'}`
 				}
 
-				return splitArray
+				return str;
+			},
+			convertXMLToJSON(xml,extractedFields){
+				let obj = {}
+
+				for (let key in extractedFields) {
+					
+					let _key = xml.substring(xml.indexOf('<')+1, xml.indexOf('>'))
+					let _value = xml.substring(xml.indexOf('>')+1, xml.indexOf('</'))
+
+					xml = xml.substring(xml.indexOf('><')+1, xml.length)
+
+					let removed = JSON.stringify(_value).replace(`"\"`,`"`)
+					    removed = removed.replace(`\""`,`"`)
+
+					Object.assign(obj,{[_key]: _value})
+				}
+
+				return obj;
 			},
 
-			updatingStoryContents(storyJson, storyObject, requestedLanguage, translatedJson){
-				let splitingResponse = "";
-				let firstHalfStr = "";
-				let secondHalfStr = "";
-				let fullStr = '';
-				let translatedStoryObj = JSON.stringify(storyObject)
+			// extracts the fields from story object with the help of story json returned by export.json api
+			extractingFields(storyJson,storyObject) {
+				let translatableContents = {};
+
+				let languageStr = this.currentLanguage === "Default Language" ? "" : `__i18n__${this.transformLanguageString(this.currentLanguage)}`
 
 				for (let keys in storyJson) {
-					let extracted = keys.split(":");
-
-					if (extracted.length > 1 ) {
-
-						splitingResponse = translatedStoryObj.split(`"${extracted[0]}"`);
-						
-						firstHalfStr  = splitingResponse[1].substring(0,splitingResponse[1].indexOf(`"${extracted[2]}":"${storyJson[keys]}"`));
-						secondHalfStr = splitingResponse[1].substring( splitingResponse[1].indexOf(`"${extracted[2]}":"${storyJson[keys]}"`));
+					let extracted = keys.split(":"); // splitting e.g {4e272c60-a59e-4c1d-b7bc-115b920588e6:button:text: "Call to action"} in 3 parts
+					let extractedContent = [];
+					let keyBackUp = ""
 					
-						if (JSON.stringify(secondHalfStr).includes(`${extracted[2]}__i18n__${this.transformLanguageString(requestedLanguage)}`)) {
-							secondHalfStr = secondHalfStr.replace(`"${extracted[2]}__i18n__${this.transformLanguageString(requestedLanguage)}"`,
-																`"${extracted[2]}__i18n__XXXX${this.transformLanguageString(requestedLanguage)}"`)
+					if (extracted.length > 1 ) {
+						
+						if(storyObject.content.body){
+							extractedContent = Array.from(storyObject.content.body) 
 						}
-
-						for (let keys in translatedJson.root) {
-							
-							if (keys.localeCompare(extracted[2]) === Number(0)) {
-								let value =  translatedJson.root[keys][0];
-								let newObj = `"${keys}__i18n__${this.transformLanguageString(requestedLanguage)}":${JSON.stringify(value)}`;
-
-								if(value.startsWith('"') && value.endsWith('"'))
-									newObj = `"${keys}__i18n__${this.transformLanguageString(requestedLanguage)}":"\\${value}`; 
-								
-								fullStr = splitingResponse[0].concat(`"${extracted[0]}"`);
-							
-								if(!fullStr.endsWith(',')){
-									fullStr = fullStr.concat(",");
-									
-									if(firstHalfStr.startsWith(','))
-										firstHalfStr = firstHalfStr.substring(1);
-								}
-
-								fullStr = fullStr.concat(firstHalfStr);
-								fullStr = fullStr.concat(newObj);
-
-								if(!fullStr.endsWith(',')){
-									fullStr = fullStr.concat(",")
-
-									if(secondHalfStr.startsWith(','))
-										secondHalfStr = secondHalfStr.substring(1);
-								}
-
-								fullStr = fullStr.concat(secondHalfStr);
-
-								if (translatedJson.root[keys].length > 1) translatedJson.root[keys].splice(0,1);
-								
-								translatedStoryObj = fullStr;
+						else if(storyObject.content.footer && storyObject.content.header){
+							if(JSON.stringify(storyObject.content.footer).includes(extracted[0])){
+								extractedContent = Array.from(storyObject.content.footer) 
+							}
+							else{
+								extractedContent = Array.from(storyObject.content.header) 
 							}
 						}
-					}
-				}	
 
-				return translatedStoryObj;
+						do{
+						
+							let existsInKeyName = ""
+
+							if(keyBackUp !== "")
+								extractedContent = extractedContent[keyBackUp]
+
+							
+							extractedContent = extractedContent.reduce((previousValue, currentValue) => {
+								if(JSON.stringify(previousValue).includes(extracted[0])) return previousValue; //determining in which obj the _uid is present
+								else return currentValue
+							})
+
+							if(extractedContent.component !== extracted[1]){ //checking if we are in the correct obj, extracted¢[1] includes the name of the component
+								for(let _keys in extractedContent){
+									if(JSON.stringify(extractedContent[_keys]).includes(extracted[1])){ //determining if the object is further nested where out content is present
+										existsInKeyName = _keys;											//and the name of the key in which it is present
+										break;
+									}
+								}
+							}
+
+							if(!Array.isArray(extractedContent[existsInKeyName]) && typeof extractedContent[existsInKeyName] === 'object' ) //if the key is the type of object {}
+								if(extractedContent._uid == extracted[0] && extractedContent.component ==  extracted[1])
+									break;
+
+							if(extractedContent._uid == extracted[0]) //if _uid has been matched, copy the value of 2nd index to 1st since extracted[0] is being used above
+								extracted[0] = extracted[1]
+
+							keyBackUp = existsInKeyName //creating a backup of existsInKeyName
+							
+						}while(extractedContent.component !==  extracted[1]) //loop until component name is not matched
+						
+						
+						if (extractedContent) {
+							Object.assign(translatableContents, { [`${keys}`]: extractedContent[`${extracted[2]}${languageStr}`] }); // creating an object of translatable fields
+						}
+					}
+				}
+
+				return translatableContents
 			},
 
+
+			// storyJsonWithLang only contains the translatable fields
+			// both objects are being compared and key which are not present in storyJsonWithLang are being removed from storyJson
 			removeUnwanted(storyJson, storyJsonWithLang){
 				let newStoryJson = {}
 
 				for(let keyOfStoryJson in storyJson){
 					if(storyJsonWithLang.hasOwnProperty(keyOfStoryJson)){
-						Object.assign(newStoryJson, {[keyOfStoryJson]: storyJson[keyOfStoryJson]})
+						Object.assign(newStoryJson, {[keyOfStoryJson]: JSON.stringify(storyJson[keyOfStoryJson])})
 					}
 				}
 
@@ -332,47 +296,37 @@
 			},
 
 			async sendTranslationRequest() {
-				if(this.requestedLanguages.length > 0){
-					let json = "";
-					// let updatedStory = await this.fetchStory();
+				if(this.requestedLanguages.length > 0){ 
+					
 					let updatedStory = await fetchStory(this.$route.query.space_id,this.story.id, this.availableLanguages[0].lang);
 					let storyObject = updatedStory.storyObj
 					let storyJson = this.removeUnwanted(updatedStory.storyJSON,  updatedStory.storyJSONWithLang)
-					let extractedFields = [];
+					let extractedFields = {...this.extractingFields(storyJson, storyObject)}
 					let sourceLanguage = this.currentLanguage !== "Default Language" ? this.currentLanguage.split("-")[0].toUpperCase() : ""
-	
-					console.log('storyJSON', storyJson);
-					extractedFields = Array.from(this.extractingFields(storyJson, storyObject))
-					console.log('extractedFields', extractedFields);
-
-					let builder = new xml2js.Builder();
-					// let extractedFieldsXML = builder.buildObject(extractedFields);
-					let extractedFieldsXML = builder.buildObject(JSON.parse(JSON.stringify(extractedFields)));
+					let extractedFieldsXML = this.generateXML(extractedFields) 					// converting json to xml
 					
-					console.log('source', sourceLanguage, this.currentLanguage)
-					console.log('extractedFieldsXML', extractedFieldsXML)
+					// console.log('extractedFields', extractedFields);
+					// console.log("extractedXML", extractedFieldsXML)
 					
 					this.requestedLanguages.forEach(async (requestedLanguage) => {
 						const response = await deepLTranslate(
-											extractedFieldsXML,
-											requestedLanguage.split("-")[0].trim(),
-											// this.currentLanguage.split("-")[0].toUpperCase(),
-											sourceLanguage,
-											this.apiKey,
+											extractedFieldsXML, requestedLanguage.split("-")[0].trim(),
+											sourceLanguage, this.apiKey,
 										);
+
 						if (response) {
-							// this.successMessage();
-							xml2js.parseString(
-								response.translations[0].text,
-								(err, result) => {
-									if (err) throw err;
-									json = JSON.parse(JSON.stringify(result, null, 4));
-								}
-							);
-	
-							storyObject = await updateStory( this.$route.query.space_id, this.story.id, 
-																  JSON.parse(this.updatingStoryContents( storyJson, storyObject,
-																										 requestedLanguage, json )));
+							
+							let convertedXml = {
+								...this.convertXMLToJSON(response.translations[0].text, extractedFields), 
+								language: requestedLanguage,
+								page: this.story.id+"",
+								text_nodes: JSON.parse(storyJson.text_nodes),
+								url: JSON.parse(storyJson.url)
+							}
+							
+							// console.log('converted xml', convertedXml)
+							storyObject = await updateStory( this.$route.query.space_id, this.story.id, JSON.stringify(convertedXml),requestedLanguage);
+						
 							if(storyObject)
 								this.successMessage();
 							else
