@@ -297,45 +297,48 @@
 
 			async sendTranslationRequest() {
 				if(this.requestedLanguages.length > 0){ 
-					
-					let updatedStory = await fetchStory(this.$route.query.space_id,this.story.id, this.availableLanguages[0].lang);
-					let storyObject = updatedStory.storyObj
-					let storyJson = this.removeUnwanted(updatedStory.storyJSON,  updatedStory.storyJSONWithLang)
-					let extractedFields = {...this.extractingFields(storyJson, storyObject)}
-					let sourceLanguage = this.currentLanguage !== "Default Language" ? this.currentLanguage.split("-")[0].toUpperCase() : ""
-					let extractedFieldsXML = this.generateXML(extractedFields) 					// converting json to xml
-					
-					// console.log('extractedFields', extractedFields);
-					// console.log("extractedXML", extractedFieldsXML)
-					
-					this.requestedLanguages.forEach(async (requestedLanguage) => {
-						const response = await deepLTranslate(
-											extractedFieldsXML, requestedLanguage.split("-")[0].trim(),
-											sourceLanguage, this.apiKey,
-										);
+					if(!this.requestedLanguages.includes(this.currentLanguage)){
+						let updatedStory = await fetchStory(this.$route.query.space_id,this.story.id, this.availableLanguages[0].lang);
+						let storyObject = updatedStory.storyObj
+						let storyJson = this.removeUnwanted(updatedStory.storyJSON,  updatedStory.storyJSONWithLang)
+						let extractedFields = {...this.extractingFields(storyJson, storyObject)}
+						let sourceLanguage = this.currentLanguage !== "Default Language" ? this.currentLanguage.split("-")[0].toUpperCase() : ""
+						let extractedFieldsXML = this.generateXML(extractedFields) 					// converting json to xml
 
-						if (response) {
-							
-							let convertedXml = {
-								...this.convertXMLToJSON(response.translations[0].text, extractedFields), 
-								language: requestedLanguage,
-								page: this.story.id+"",
-								text_nodes: JSON.parse(storyJson.text_nodes),
-								url: JSON.parse(storyJson.url)
+						// console.log('extractedFields', extractedFields);
+						// console.log("extractedXML", extractedFieldsXML)
+
+						this.requestedLanguages.forEach(async (requestedLanguage) => {
+							const response = await deepLTranslate(
+												extractedFieldsXML, requestedLanguage.split("-")[0].trim(),
+												sourceLanguage, this.apiKey,
+											);
+	
+							if (response) {
+
+								let convertedXml = {
+									...this.convertXMLToJSON(response.translations[0].text, extractedFields),
+									language: requestedLanguage,
+									page: this.story.id+"",
+									text_nodes: JSON.parse(storyJson.text_nodes),
+									url: JSON.parse(storyJson.url)
+								}
+
+								// console.log('converted xml', convertedXml)
+								storyObject = await updateStory( this.$route.query.space_id, this.story.id, JSON.stringify(convertedXml),requestedLanguage);
+
+								if(storyObject)
+									this.successMessage();
+								else
+									this.errorMessage(requestedLanguage)
 							}
-							
-							// console.log('converted xml', convertedXml)
-							storyObject = await updateStory( this.$route.query.space_id, this.story.id, JSON.stringify(convertedXml),requestedLanguage);
-						
-							if(storyObject)
-								this.successMessage();
-							else
-								this.errorMessage(requestedLanguage)
-						}
-					});
+						});
+					}
+					else
+						this.languageErrorMessage('Requested languages should not include source language');
 				}
 				else
-					this.languageErrorMessage();
+					this.languageErrorMessage('Please select atleast one target language');
 			},
 			successMessage() {
 				Notification({
@@ -344,10 +347,10 @@
 				type: 'success',
 				});
 			},
-			languageErrorMessage() {
+			languageErrorMessage(_message) {
 				Notification({
 				title: 'Error',
-				message: 'Please select atleast one target language',
+				message: _message,
 				type: 'error',
 				});
 			},
