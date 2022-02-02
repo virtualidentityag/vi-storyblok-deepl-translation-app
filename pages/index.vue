@@ -225,7 +225,17 @@
 					
 					if (extracted.length > 1 ) {
 						
-						extractedContent = Array.from(storyObject.content.body) 
+						if(storyObject.content.body){
+							extractedContent = Array.from(storyObject.content.body) 
+						}
+						else if(storyObject.content.footer && storyObject.content.header){
+							if(JSON.stringify(storyObject.content.footer).includes(extracted[0])){
+								extractedContent = Array.from(storyObject.content.footer) 
+							}
+							else{
+								extractedContent = Array.from(storyObject.content.header) 
+							}
+						}
 
 						do{
 						
