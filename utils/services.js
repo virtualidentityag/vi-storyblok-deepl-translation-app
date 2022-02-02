@@ -10,6 +10,62 @@ export const fetchDataSources = async (spaceId) => {
     return datasource
 }
 
+export const fetchDataSourceEntries = async (spaceId) => {
+    let apiKey = ""
+    let invalidKey = true
+    let entry = await Storyblok.get(`spaces/${spaceId}/datasource_entries`, {
+                        "datasource_slug": "deepl-api-key"
+                })
+                .then(response => {
+                    return response;
+                }).catch(error => { 
+                    console.log(error)
+                })
+                
+    if(!entry){
+        let dataSource = await createDataSource(spaceId);
+        
+        if(dataSource){
+            let newEntry = await createDataSourceEntry(spaceId,dataSource.data.datasource.id)
+            
+            if(newEntry)
+                apiKey = newEntry.data.datasource_entry
+            else
+                return false;
+        }
+    }
+    else{
+        let key = entry.data.datasource_entries.find(element => element.name === "Deepl-Api-key")
+
+        if(key){
+            if(key.value.trim() !== "Enter-Api-Key-Here"){
+                apiKey = key.value;
+                invalidKey = false;
+            }
+            else
+                invalidKey = true;
+        }
+        else{
+            let datasource = await fetchDataSources(spaceId)
+
+            if(datasource){
+                let dataSourceId = datasource.data.datasources.find(element => element.slug === "deepl-api-key").id
+                let newEntry = await createDataSourceEntry(spaceId,dataSourceId)
+                
+                if(newEntry)
+                    apiKey = newEntry.data.datasource_entry
+                else
+                    return false;
+            }
+            
+            invalidKey = true;
+
+        }
+    }
+
+    return {apiKey, invalidKey}
+}
+
 export const createDataSource = async (spaceId) => {
     let newDataSource = await Storyblok.post(`spaces/${spaceId}/datasources`,{
                             "datasource": {

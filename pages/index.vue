@@ -47,7 +47,7 @@
 <script>
 	import { Notification } from 'element-ui';
 	import { deepLTranslate } from './../utils/deepl-services'
-	import { fetchStory, createDataSource, createDataSourceEntry, updateStory, fetchDataSources } from '../utils/services'
+	import { fetchStory, updateStory, fetchDataSourceEntries } from '../utils/services'
 	import { languageCodes } from './../utils/language-codes'
 	import Storyblok from "./../utils/Storyblok-config";
 
@@ -94,7 +94,7 @@
 				"https://app.storyblok.com"
 			);
 
-			this.fetchDataSourceEntries()
+			this.initDataSources();
 		},
 
 		methods: {
@@ -125,58 +125,67 @@
 
 			getAvailableLanguagesName(code){ return code + " - " + this.getlangName(code);},
 			
-			//fetch api key saved in data entries, if not then it creates an entry
-			async fetchDataSourceEntries() {
-				let entry = await Storyblok.get(`spaces/${this.$route.query.space_id}/datasource_entries`, {
-									"datasource_slug": "deepl-api-key"
-							})
-							.then(response => {
-								return response;
-							}).catch(error => { 
-								console.log(error)
-							})
-							
-				if(!entry){
-					let dataSource = await createDataSource(this.$route.query.space_id);
-					
-					if(dataSource){
-						let newEntry = await createDataSourceEntry(this.$route.query.space_id,dataSource.data.datasource.id)
-						
-						if(newEntry)
-							this.apiKey = newEntry.data.datasource_entry
-						else
-							return false;
-					}
-				}
-				else{
-					let key = entry.data.datasource_entries.find(element => element.name === "Deepl-Api-key")
+			async initDataSources(){
+				let dataSourceObj = await fetchDataSourceEntries(this.$route.query.space_id)
 
-					if(key){
-						if(key.value !== "Enter-Api-Key-Here"){
-							this.apiKey = key.value;
-							this.invalidKey = false;
-						}
-						else
-							this.invalidKey = true;
-					}
-					else{
-						let datasource = await fetchDataSources(this.$route.query.space_id)
-
-						if(datasource){
-							let dataSourceId = datasource.data.datasources.find(element => element.slug === "deepl-api-key").id
-							let newEntry = await createDataSourceEntry(this.$route.query.space_id,dataSourceId)
-							
-							if(newEntry)
-								this.apiKey = newEntry.data.datasource_entry
-							else
-								return false;
-						}
-						
-						this.invalidKey = true;
-
-					}
+				if(dataSourceObj){
+					this.apiKey = dataSourceObj.apiKey
+					this.invalidKey = dataSourceObj.invalidKey
 				}
 			},
+
+			//fetch api key saved in data entries, if not then it creates an entry
+			// async fetchDataSourceEntries() {
+			// 	let entry = await Storyblok.get(`spaces/${this.$route.query.space_id}/datasource_entries`, {
+			// 						"datasource_slug": "deepl-api-key"
+			// 				})
+			// 				.then(response => {
+			// 					return response;
+			// 				}).catch(error => { 
+			// 					console.log(error)
+			// 				})
+							
+			// 	if(!entry){
+			// 		let dataSource = await createDataSource(this.$route.query.space_id);
+					
+			// 		if(dataSource){
+			// 			let newEntry = await createDataSourceEntry(this.$route.query.space_id,dataSource.data.datasource.id)
+						
+			// 			if(newEntry)
+			// 				this.apiKey = newEntry.data.datasource_entry
+			// 			else
+			// 				return false;
+			// 		}
+			// 	}
+			// 	else{
+			// 		let key = entry.data.datasource_entries.find(element => element.name === "Deepl-Api-key")
+
+			// 		if(key){
+			// 			if(key.value !== "Enter-Api-Key-Here"){
+			// 				this.apiKey = key.value;
+			// 				this.invalidKey = false;
+			// 			}
+			// 			else
+			// 				this.invalidKey = true;
+			// 		}
+			// 		else{
+			// 			let datasource = await fetchDataSources(this.$route.query.space_id)
+
+			// 			if(datasource){
+			// 				let dataSourceId = datasource.data.datasources.find(element => element.slug === "deepl-api-key").id
+			// 				let newEntry = await createDataSourceEntry(this.$route.query.space_id,dataSourceId)
+							
+			// 				if(newEntry)
+			// 					this.apiKey = newEntry.data.datasource_entry
+			// 				else
+			// 					return false;
+			// 			}
+						
+			// 			this.invalidKey = true;
+
+			// 		}
+			// 	}
+			// },
 
 			
 			transformLanguageString(languageString){
