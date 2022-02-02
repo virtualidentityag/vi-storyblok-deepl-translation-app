@@ -123,7 +123,6 @@ export const fetchStory = async (spaceId, storyId, language) => {
     
     const storyJSONWithLang = await Storyblok.get(
         `spaces/${spaceId}/stories/${storyId}/export.json`,
-        // {}
           {lang_code: language}
         )
         .then((response) => {

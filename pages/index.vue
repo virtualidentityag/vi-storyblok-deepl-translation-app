@@ -134,59 +134,6 @@
 				}
 			},
 
-			//fetch api key saved in data entries, if not then it creates an entry
-			// async fetchDataSourceEntries() {
-			// 	let entry = await Storyblok.get(`spaces/${this.$route.query.space_id}/datasource_entries`, {
-			// 						"datasource_slug": "deepl-api-key"
-			// 				})
-			// 				.then(response => {
-			// 					return response;
-			// 				}).catch(error => { 
-			// 					console.log(error)
-			// 				})
-							
-			// 	if(!entry){
-			// 		let dataSource = await createDataSource(this.$route.query.space_id);
-					
-			// 		if(dataSource){
-			// 			let newEntry = await createDataSourceEntry(this.$route.query.space_id,dataSource.data.datasource.id)
-						
-			// 			if(newEntry)
-			// 				this.apiKey = newEntry.data.datasource_entry
-			// 			else
-			// 				return false;
-			// 		}
-			// 	}
-			// 	else{
-			// 		let key = entry.data.datasource_entries.find(element => element.name === "Deepl-Api-key")
-
-			// 		if(key){
-			// 			if(key.value !== "Enter-Api-Key-Here"){
-			// 				this.apiKey = key.value;
-			// 				this.invalidKey = false;
-			// 			}
-			// 			else
-			// 				this.invalidKey = true;
-			// 		}
-			// 		else{
-			// 			let datasource = await fetchDataSources(this.$route.query.space_id)
-
-			// 			if(datasource){
-			// 				let dataSourceId = datasource.data.datasources.find(element => element.slug === "deepl-api-key").id
-			// 				let newEntry = await createDataSourceEntry(this.$route.query.space_id,dataSourceId)
-							
-			// 				if(newEntry)
-			// 					this.apiKey = newEntry.data.datasource_entry
-			// 				else
-			// 					return false;
-			// 			}
-						
-			// 			this.invalidKey = true;
-
-			// 		}
-			// 	}
-			// },
-
 			
 			transformLanguageString(languageString){
 				const splittedString = languageString.split('-')
@@ -312,10 +259,7 @@
 						let storyJson = this.removeUnwanted(updatedStory.storyJSON,  updatedStory.storyJSONWithLang)
 						let extractedFields = {...this.extractingFields(storyJson, storyObject)}
 						let sourceLanguage = this.currentLanguage !== "Default Language" ? this.currentLanguage.split("-")[0].toUpperCase() : ""
-						let extractedFieldsXML = this.generateXML(extractedFields) 					// converting json to xml
-
-						// console.log('extractedFields', extractedFields);
-						// console.log("extractedXML", extractedFieldsXML)
+						let extractedFieldsXML = this.generateXML(extractedFields) 	// converting json to xml
 
 						this.requestedLanguages.forEach(async (requestedLanguage) => {
 							const response = await deepLTranslate(
