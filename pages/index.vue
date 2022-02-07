@@ -188,25 +188,11 @@
 									Object.assign(translatableContents, { [`${keys}`]: storyObject.content[`${extracted[2]}${languageStr}`] });
 									checkFurther = false
 								}
-								console.log('no need to nest. it is available outside', extracted)
 							}
 							else if(JSON.stringify(storyObject.content[_keys]).includes(extracted[0])){
-								console.log('exists in key = ',_keys)
 								extractedContent = Array.from(storyObject.content[_keys]) 
 							}
 						}
-						
-						// if(storyObject.content.body){
-						// 	extractedContent = Array.from(storyObject.content.body) 
-						// }
-						// else if(storyObject.content.footer && storyObject.content.header){
-						// 	if(JSON.stringify(storyObject.content.footer).includes(extracted[0])){
-						// 		extractedContent = Array.from(storyObject.content.footer) 
-						// 	}
-						// 	else{
-						// 		extractedContent = Array.from(storyObject.content.header) 
-						// 	}
-						// }
 
 						if(checkFurther){
 							do{
