@@ -171,65 +171,83 @@
 			// extracts the fields from story object with the help of story json returned by export.json api
 			extractingFields(storyJson,storyObject) {
 				let translatableContents = {};
-
 				let languageStr = this.currentLanguage === "Default Language" ? "" : `__i18n__${this.transformLanguageString(this.currentLanguage)}`
 
 				for (let keys in storyJson) {
 					let extracted = keys.split(":"); // splitting e.g {4e272c60-a59e-4c1d-b7bc-115b920588e6:button:text: "Call to action"} in 3 parts
 					let extractedContent = [];
 					let keyBackUp = ""
-					
+					let checkFurther = true;
+
+
 					if (extracted.length > 1 ) {
-						
-						if(storyObject.content.body){
-							extractedContent = Array.from(storyObject.content.body) 
-						}
-						else if(storyObject.content.footer && storyObject.content.header){
-							if(JSON.stringify(storyObject.content.footer).includes(extracted[0])){
-								extractedContent = Array.from(storyObject.content.footer) 
+
+						for(let _keys in storyObject.content){
+							if(storyObject.content._uid === extracted[0]){ // if the field is directly inside content object
+								if(storyObject.content.component === extracted[1] && storyObject.content[extracted[2]]){ // just checking the component and field name for it
+									Object.assign(translatableContents, { [`${keys}`]: storyObject.content[`${extracted[2]}${languageStr}`] });
+									checkFurther = false
+								}
+								console.log('no need to nest. it is available outside', extracted)
 							}
-							else{
-								extractedContent = Array.from(storyObject.content.header) 
+							else if(JSON.stringify(storyObject.content[_keys]).includes(extracted[0])){
+								console.log('exists in key = ',_keys)
+								extractedContent = Array.from(storyObject.content[_keys]) 
 							}
 						}
-
-						do{
 						
-							let existsInKeyName = ""
+						// if(storyObject.content.body){
+						// 	extractedContent = Array.from(storyObject.content.body) 
+						// }
+						// else if(storyObject.content.footer && storyObject.content.header){
+						// 	if(JSON.stringify(storyObject.content.footer).includes(extracted[0])){
+						// 		extractedContent = Array.from(storyObject.content.footer) 
+						// 	}
+						// 	else{
+						// 		extractedContent = Array.from(storyObject.content.header) 
+						// 	}
+						// }
 
-							if(keyBackUp !== "")
-								extractedContent = extractedContent[keyBackUp]
-
+						if(checkFurther){
+							do{
 							
-							extractedContent = extractedContent.reduce((previousValue, currentValue) => {
-								if(JSON.stringify(previousValue).includes(extracted[0])) return previousValue; //determining in which obj the _uid is present
-								else return currentValue
-							})
-
-							if(extractedContent.component !== extracted[1]){ //checking if we are in the correct obj, extracted¢[1] includes the name of the component
-								for(let _keys in extractedContent){
-									if(JSON.stringify(extractedContent[_keys]).includes(extracted[1])){ //determining if the object is further nested where out content is present
-										existsInKeyName = _keys;											//and the name of the key in which it is present
-										break;
+								let existsInKeyName = ""
+	
+								if(keyBackUp !== "")
+									extractedContent = extractedContent[keyBackUp]
+	
+								
+								extractedContent = extractedContent.reduce((previousValue, currentValue) => {
+									if(JSON.stringify(previousValue).includes(extracted[0])) return previousValue; //determining in which obj the _uid is present
+									else return currentValue
+								})
+	
+								if(extractedContent.component !== extracted[1]){ //checking if we are in the correct obj, extracted¢[1] includes the name of the component
+									for(let _keys in extractedContent){
+										if(JSON.stringify(extractedContent[_keys]).includes(extracted[1])){ //determining if the object is further nested where out content is present
+											existsInKeyName = _keys;											//and the name of the key in which it is present
+											break;
+										}
 									}
 								}
-							}
-
-							if(!Array.isArray(extractedContent[existsInKeyName]) && typeof extractedContent[existsInKeyName] === 'object' ) //if the key is the type of object {}
-								if(extractedContent._uid == extracted[0] && extractedContent.component ==  extracted[1])
-									break;
-
-							if(extractedContent._uid == extracted[0]) //if _uid has been matched, copy the value of 2nd index to 1st since extracted[0] is being used above
-								extracted[0] = extracted[1]
-
-							keyBackUp = existsInKeyName //creating a backup of existsInKeyName
+	
+								if(!Array.isArray(extractedContent[existsInKeyName]) && typeof extractedContent[existsInKeyName] === 'object' ) //if the key is the type of object {}
+									if(extractedContent._uid == extracted[0] && extractedContent.component ==  extracted[1])
+										break;
+	
+								if(extractedContent._uid == extracted[0]) //if _uid has been matched, copy the value of 2nd index to 1st since extracted[0] is being used above
+									extracted[0] = extracted[1]
+	
+								keyBackUp = existsInKeyName //creating a backup of existsInKeyName
+								
+							}while(extractedContent.component !==  extracted[1]) //loop until component name is not matched
 							
-						}while(extractedContent.component !==  extracted[1]) //loop until component name is not matched
-						
-						
-						if (extractedContent) {
-							Object.assign(translatableContents, { [`${keys}`]: extractedContent[`${extracted[2]}${languageStr}`] }); // creating an object of translatable fields
+							
+							if (extractedContent) {
+								Object.assign(translatableContents, { [`${keys}`]: extractedContent[`${extracted[2]}${languageStr}`] }); // creating an object of translatable fields
+							}
 						}
+
 					}
 				}
 
@@ -254,6 +272,7 @@
 			async sendTranslationRequest() {
 				if(this.requestedLanguages.length > 0){ 
 					if(!this.requestedLanguages.includes(this.currentLanguage)){
+						console.log('StoryID', this.story.id)
 						let updatedStory = await fetchStory(this.$route.query.space_id,this.story.id, this.availableLanguages[0].lang);
 						let storyObject = updatedStory.storyObj
 						let storyJson = this.removeUnwanted(updatedStory.storyJSON,  updatedStory.storyJSONWithLang)
