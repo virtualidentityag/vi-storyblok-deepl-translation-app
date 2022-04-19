@@ -10,7 +10,8 @@
 				:closable="false">
 			</el-alert>
 		</el-row>
-		<el-row v-if="languagesAvailable">
+		<!-- <el-row v-show="languagesAvailable"> -->
+		<el-row v-else>
 			<p>Content will be translated from: {{ getlangName(currentLanguage) }}</p>
 			
 			<el-row>
@@ -26,7 +27,7 @@
 			</el-row>
 		</el-row>
 		
-		<el-row v-if="invalidKey">
+		<el-row v-show="invalidKey">
 			<el-alert
 				title="Invalid key. Please enter a valid DeepL api key"
 				type="error"
@@ -42,6 +43,7 @@
 		</el-row>
 		<!-- <p>Checked {{requestedLanguages}}</p> -->
 	</div>
+	<div v-else></div>
 </template>
 
 <script>
