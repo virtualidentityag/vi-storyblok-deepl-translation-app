@@ -10,10 +10,17 @@
 				:closable="false">
 			</el-alert>
 		</el-row>
-		<!-- <el-row v-show="languagesAvailable"> -->
+		
 		<el-row v-else>
 			<p>Content will be translated from: {{ getlangName(currentLanguage) }}</p>
 			
+			<el-row>
+				<p>Mode of Translation: (required)</p>
+
+				<el-radio v-model="translationMode" label="FOLDER_LEVEL">Folder Level</el-radio>
+  				<el-radio v-model="translationMode" label="FIELD_LEVEL">Field Level</el-radio>
+			</el-row>
+
 			<el-row>
 				<p>Translate Into: (required)</p>
 
@@ -41,7 +48,6 @@
 				:closable="false">
 			</el-alert>
 		</el-row>
-		<!-- <p>Checked {{requestedLanguages}}</p> -->
 	</div>
 	<div v-else></div>
 </template>
@@ -51,7 +57,6 @@
 	import { deepLTranslate } from './../utils/deepl-services'
 	import { fetchStory, updateStory, fetchDataSourceEntries } from '../utils/services'
 	import { languageCodes } from './../utils/language-codes'
-	import Storyblok from "./../utils/Storyblok-config";
 
 	export default {
 		data() {
@@ -64,11 +69,12 @@
 				apiKey: "",
 				availableLanguages: [],
 				requestedLanguages: [],
+				translationMode:'',
 			};
 		},
 
 		mounted() {
-			
+
 			if (window.top === window.self) {
 				window.location.assign("https://app.storyblok.com/oauth/tool_redirect");
 			}
@@ -113,7 +119,6 @@
 						this.languagesAvailable = true
 						this.availableLanguages = Array.from(event.data.story.localized_paths);
 					}
-
 				}
 			},
 
@@ -244,7 +249,7 @@
 
 
 			// storyJsonWithLang only contains the translatable fields
-			// both objects are being compared and key which are not present in storyJsonWithLang are being removed from storyJson
+			// both objects are being compared and those keys which are not present in storyJsonWithLang are being removed from storyJson
 			removeUnwanted(storyJson, storyJsonWithLang){
 				let newStoryJson = {}
 
@@ -258,47 +263,55 @@
 			},
 
 			async sendTranslationRequest() {
-				if(this.requestedLanguages.length > 0){ 
-					if(!this.requestedLanguages.includes(this.currentLanguage)){
-						console.log('StoryID', this.story.id)
-						let updatedStory = await fetchStory(this.$route.query.space_id,this.story.id, this.availableLanguages[0].lang);
-						let storyObject = updatedStory.storyObj
-						let storyJson = this.removeUnwanted(updatedStory.storyJSON,  updatedStory.storyJSONWithLang)
-						let extractedFields = {...this.extractingFields(storyJson, storyObject)}
-						let sourceLanguage = this.currentLanguage !== "Default Language" ? this.currentLanguage.split("-")[0].toUpperCase() : ""
-						let extractedFieldsXML = this.generateXML(extractedFields) 	// converting json to xml
 
-						this.requestedLanguages.forEach(async (requestedLanguage) => {
-							const response = await deepLTranslate(
-												extractedFieldsXML, requestedLanguage.split("-")[0].trim(),
-												sourceLanguage, this.apiKey,
-											);
-	
-							if (response) {
+				if(this.translationMode !== '')
+					if(this.requestedLanguages.length > 0){ 
+						if(!this.requestedLanguages.includes(this.currentLanguage)){
+						
+							let updatedStory = await fetchStory(this.$route.query.space_id,this.story.id, this.availableLanguages[0].lang);
+							let storyObject = updatedStory.storyObj
+							let storyJson = this.removeUnwanted(updatedStory.storyJSON,  updatedStory.storyJSONWithLang)
+							let extractedFields = {...this.extractingFields(storyJson, storyObject)}
+							let sourceLanguage = this.currentLanguage !== "Default Language" ? this.currentLanguage.split("-")[0].toUpperCase() : ""
+							let extractedFieldsXML = this.generateXML(extractedFields) 	// converting json to xml
 
-								let convertedXml = {
-									...this.convertXMLToJSON(response.translations[0].text, extractedFields),
-									language: requestedLanguage,
-									page: this.story.id+"",
-									text_nodes: JSON.parse(storyJson.text_nodes),
-									url: JSON.parse(storyJson.url)
+							this.requestedLanguages.forEach(async (requestedLanguage) => {
+								const response = await deepLTranslate(
+													extractedFieldsXML, requestedLanguage.split("-")[0].trim(),
+													sourceLanguage, this.apiKey,
+												);
+		
+								if (response) {
+
+									let convertedXml = {
+										...this.convertXMLToJSON(response.translations[0].text, extractedFields),
+										language: requestedLanguage,
+										page: this.story.id+"",
+										text_nodes: JSON.parse(storyJson.text_nodes),
+										url: JSON.parse(storyJson.url)
+									}
+
+									
+									if(this.translationMode === 'FOLDER_LEVEL')
+										storyObject = await updateStory( this.$route.query.space_id, this.story.id, JSON.stringify(convertedXml)); // folder level
+									else
+										storyObject = await updateStory( this.$route.query.space_id, this.story.id, JSON.stringify(convertedXml),requestedLanguage);
+
+
+									if(storyObject)
+										this.successMessage();
+									else
+										this.errorMessage(requestedLanguage)
 								}
-
-								// console.log('converted xml', convertedXml)
-								storyObject = await updateStory( this.$route.query.space_id, this.story.id, JSON.stringify(convertedXml),requestedLanguage);
-
-								if(storyObject)
-									this.successMessage();
-								else
-									this.errorMessage(requestedLanguage)
-							}
-						});
+							});
+						}
+						else
+							this.customErrorMessage('Requested languages should not include source language');
 					}
 					else
-						this.languageErrorMessage('Requested languages should not include source language');
-				}
+						this.customErrorMessage('Please select atleast one target language');
 				else
-					this.languageErrorMessage('Please select atleast one target language');
+					this.customErrorMessage('Please a select mode of translation');
 			},
 			successMessage() {
 				Notification({
@@ -307,7 +320,7 @@
 				type: 'success',
 				});
 			},
-			languageErrorMessage(_message) {
+			customErrorMessage(_message) {
 				Notification({
 				title: 'Error',
 				message: _message,
