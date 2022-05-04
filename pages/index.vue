@@ -18,7 +18,7 @@
 				<p>Mode of Translation: (required)</p>
 
 				<el-radio v-model="translationMode" label="FOLDER_LEVEL">Folder Level</el-radio>
-  				<el-radio v-model="translationMode" label="FIELD_LEVEL">Field Level</el-radio>
+  			<el-radio v-model="translationMode" label="FIELD_LEVEL">Field Level</el-radio>
 			</el-row>
 
 			<el-row>
