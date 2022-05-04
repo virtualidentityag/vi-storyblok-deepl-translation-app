@@ -156,7 +156,7 @@ export const  updateStory = async (spaceId, storyId, story, languageCode) => {
     const response = await Storyblok.put(
         `spaces/${spaceId}/stories/${storyId}/import.json`,{
             "data": story,
-            "lang_code": languageCode
+            "lang_code": languageCode ? languageCode : ""
         }
     )
         .then((response) => {
