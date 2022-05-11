@@ -12,8 +12,13 @@ export const fetchDataSources = async (spaceId) => {
 
 export const fetchDataSourceEntries = async (spaceId) => {
     let apiKey = ""
+    let modeOfTranslation = ""
+    let invalidMode = true
     let invalidKey = true
-    let entry = await Storyblok.get(`spaces/${spaceId}/datasource_entries`, {
+    let deeplEntryExistResult = undefined;
+    let modeOfTranslationEntryExistResult = undefined;
+
+    let deeplKey = await Storyblok.get(`spaces/${spaceId}/datasource_entries`, {
                         "datasource_slug": "deepl-api-key"
                 })
                 .then(response => {
@@ -21,56 +26,96 @@ export const fetchDataSourceEntries = async (spaceId) => {
                 }).catch(error => { 
                     console.log(error)
                 })
+    
+    let translationMode = await Storyblok.get(`spaces/${spaceId}/datasource_entries`, {
+                        "datasource_slug": "mode-of-translation"
+                })
+                .then(response => {
+                    return response;
+                }).catch(error => { 
+                    console.log(error)
+                })
                 
-    if(!entry){
-        let dataSource = await createDataSource(spaceId);
+    deeplEntryExistResult = await dataSourceAlreadyExists(deeplKey, "Api key for DeepL", "Deepl-Api-key", "deepl-api-key", "Enter-Api-Key-Here", false, spaceId)
+    modeOfTranslationEntryExistResult = await dataSourceAlreadyExists(translationMode,"Mode Of Translation", "Mode-Of-Translation", "mode-of-translation", "FOLDER_LEVEL-OR-FIELD_LEVEL", true, spaceId)
+
+    if(deeplEntryExistResult){
+        apiKey = deeplEntryExistResult.entryData;
+        invalidKey = deeplEntryExistResult.entryDoesNotExist
+    }
+
+    if(modeOfTranslationEntryExistResult){
+        modeOfTranslation = modeOfTranslationEntryExistResult.entryData;
+        invalidMode = modeOfTranslationEntryExistResult.entryDoesNotExist
+    }
+
+    return {apiKey, invalidKey, modeOfTranslation, invalidMode}
+}
+
+const dataSourceAlreadyExists = async (entryKey, datasourceName, elementName, datasourceSlug, datasourceInitialValue, hasFixedValue, spaceId) => {
+
+    let entryData = '';
+    let entryDoesNotExist = true;
+
+     if(!entryKey){
+        let dataSource = await createDataSource(spaceId, datasourceName, datasourceSlug);
         
         if(dataSource){
-            let newEntry = await createDataSourceEntry(spaceId,dataSource.data.datasource.id)
+            let newEntry = await createDataSourceEntry(spaceId, elementName, datasourceInitialValue, dataSource.data.datasource.id);
             
             if(newEntry)
-                apiKey = newEntry.data.datasource_entry
+                entryData = newEntry.data.datasource_entry;
             else
                 return false;
         }
     }
     else{
-        let key = entry.data.datasource_entries.find(element => element.name === "Deepl-Api-key")
+        let key = entryKey.data.datasource_entries.find(element => element.name === elementName)
 
         if(key){
-            if(key.value.trim() !== "Enter-Api-Key-Here"){
-                apiKey = key.value;
-                invalidKey = false;
+            if(hasFixedValue){
+                if(key.value.trim() === datasourceInitialValue.split('-OR-')[0] || key.value.trim() === datasourceInitialValue.split('-OR-')[1]){
+                    entryData = key.value;
+                    entryDoesNotExist = false;
+                }
+                else
+                    entryDoesNotExist = true;
             }
-            else
-                invalidKey = true;
+            else{
+                if(key.value.trim() !== datasourceInitialValue){
+                    entryData = key.value;
+                    entryDoesNotExist = false;
+                }
+                else
+                    entryDoesNotExist = true;
+            }
         }
         else{
             let datasource = await fetchDataSources(spaceId)
 
             if(datasource){
-                let dataSourceId = datasource.data.datasources.find(element => element.slug === "deepl-api-key").id
-                let newEntry = await createDataSourceEntry(spaceId,dataSourceId)
+                let dataSourceId = datasource.data.datasources.find(element => element.slug === datasourceSlug).id
+                let newEntry = await createDataSourceEntry(spaceId, elementName, datasourceInitialValue, dataSourceId)
                 
                 if(newEntry)
-                    apiKey = newEntry.data.datasource_entry
+                    entryData = newEntry.data.datasource_entry
                 else
                     return false;
             }
             
-            invalidKey = true;
+            entryDoesNotExist = true;
 
         }
     }
 
-    return {apiKey, invalidKey}
+    return {entryData, entryDoesNotExist}
 }
 
-export const createDataSource = async (spaceId) => {
+export const createDataSource = async (spaceId, name, slug) => {
     let newDataSource = await Storyblok.post(`spaces/${spaceId}/datasources`,{
                             "datasource": {
-                                "name": "Api key for DeepL",
-                                "slug": "deepl-api-key",
+                                "name": name,
+                                "slug": slug,
                             }
                         }).then(response => {
                             console.log(response)
@@ -82,11 +127,11 @@ export const createDataSource = async (spaceId) => {
     return newDataSource
 }
 
-export const createDataSourceEntry = async (spaceId, dataSourceId) => {
+export const createDataSourceEntry = async (spaceId, name, value, dataSourceId) => {
     let newDataSource = await Storyblok.post(`spaces/${spaceId}/datasource_entries`,{
                             "datasource_entry": {
-                                "name": "Deepl-Api-key",
-                                "value": "Enter-Api-Key-Here",
+                                "name": name,
+                                "value": value,
                                 "datasource_id": dataSourceId
                             }
                         }).then(response => {
@@ -136,21 +181,6 @@ export const fetchStory = async (spaceId, storyId, language) => {
     return { storyObj, storyJSON, storyJSONWithLang };
 }
 
-// export const  updateStory = async (spaceId, storyId, story) => {
-//     const response = await Storyblok.put(
-//         `spaces/${spaceId}/stories/${storyId}`,{
-//             story: { ...story },
-//         }
-//     )
-//         .then((response) => {
-//             return response.data.story;
-//         })
-//         .catch((error) => {
-//             console.log(error);
-//         });
-//     console.log("updated response", response);
-//     return response;
-// }
 
 export const  updateStory = async (spaceId, storyId, story, languageCode) => {
     const response = await Storyblok.put(
