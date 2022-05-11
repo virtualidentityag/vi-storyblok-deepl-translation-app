@@ -10,23 +10,26 @@
 				:closable="false">
 			</el-alert>
 		</el-row>
-		<el-row v-if="languagesAvailable">
+		
+		<el-row v-else>
 			<p>Content will be translated from: {{ getlangName(currentLanguage) }}</p>
+			<p v-if= getTranslationModeName(modeOfTranslation)>Translation Mode is set to: <strong>{{ getTranslationModeName(modeOfTranslation) }}</strong></p>
+			<p class='error-text' v-else> Please set the translation mode in the Datasource -> Mode Of Translation </p> 
 			
 			<el-row>
 				<p>Translate Into: (required)</p>
 
-				<el-checkbox-group v-for="locale in availableLanguages" :disabled='invalidKey' :key="locale.lang" v-model="requestedLanguages">
+				<el-checkbox-group v-for="locale in availableLanguages" :disabled='invalidKey || invalidMode' :key="locale.lang" v-model="requestedLanguages">
 					<el-checkbox :label="locale.lang"> {{getAvailableLanguagesName(locale.lang)}} </el-checkbox>
 				</el-checkbox-group>
 			</el-row>
 
 			<el-row>
-				<el-button v-on:click="sendTranslationRequest" :disabled='invalidKey' type="primary" size="mini">Translate Content</el-button>
+				<el-button v-on:click="sendTranslationRequest" :disabled='invalidKey || invalidMode' type="primary" size="mini">Translate Content</el-button>
 			</el-row>
 		</el-row>
 		
-		<el-row v-if="invalidKey">
+		<el-row v-show="invalidKey">
 			<el-alert
 				title="Invalid key. Please enter a valid DeepL api key"
 				type="error"
@@ -40,8 +43,20 @@
 				:closable="false">
 			</el-alert>
 		</el-row>
-		<!-- <p>Checked {{requestedLanguages}}</p> -->
+		<el-row v-show="invalidMode">
+			<el-alert
+				title="Invalid Translation Mode."
+				type="error"
+				description='Please enter a valid translation mode:
+				> For folder level translations enter -> FOLDER_LEVEL
+				
+				> For Field level translations enter -> FIELD_LEVEL'
+				show-icon
+				:closable="false">
+			</el-alert>
+		</el-row>
 	</div>
+	<div v-else></div>
 </template>
 
 <script>
@@ -49,7 +64,6 @@
 	import { deepLTranslate } from './../utils/deepl-services'
 	import { fetchStory, updateStory, fetchDataSourceEntries } from '../utils/services'
 	import { languageCodes } from './../utils/language-codes'
-	import Storyblok from "./../utils/Storyblok-config";
 
 	export default {
 		data() {
@@ -57,16 +71,21 @@
 				story: undefined,
 				loadingContext: true,
 				invalidKey: true,
+				invalidMode: true,
 				languagesAvailable: false,
 				currentLanguage: "",
 				apiKey: "",
+				modeOfTranslation: "",
 				availableLanguages: [],
 				requestedLanguages: [],
+				translationMode:'',
+				spaceId: this.$route.query.space_id
+				// spaceId: '157196'
 			};
 		},
 
 		mounted() {
-			
+
 			if (window.top === window.self) {
 				window.location.assign("https://app.storyblok.com/oauth/tool_redirect");
 			}
@@ -78,6 +97,7 @@
 				{
 					action: "tool-changed",
 					tool: "virtual-identity-ag@auto-translations-app",
+					// tool: "virtual-identity-ag@translations-backup-app",
 					event: "getContext",
 				},
 				"https://app.storyblok.com"
@@ -88,6 +108,7 @@
 				{
 					action: "tool-changed",
 					tool: "virtual-identity-ag@auto-translations-app",
+					// tool: "virtual-identity-ag@translations-backup-app",
 					event: "heightChange",
 					height: 500,
 				},
@@ -111,7 +132,6 @@
 						this.languagesAvailable = true
 						this.availableLanguages = Array.from(event.data.story.localized_paths);
 					}
-
 				}
 			},
 
@@ -122,18 +142,28 @@
 				else
 					return langCode
 			},
+			
+			getTranslationModeName(mode){
+				if(mode === "FOLDER_LEVEL")
+					return 'Folder Level'
+				else if (mode === "FIELD_LEVEL")
+					return 'Field Level'
+				else
+					return false
+			},
 
 			getAvailableLanguagesName(code){ return code + " - " + this.getlangName(code);},
 			
 			async initDataSources(){
-				let dataSourceObj = await fetchDataSourceEntries(this.$route.query.space_id)
+				let dataSourceObj = await fetchDataSourceEntries(this.spaceId)
 
 				if(dataSourceObj){
 					this.apiKey = dataSourceObj.apiKey
 					this.invalidKey = dataSourceObj.invalidKey
+					this.modeOfTranslation = dataSourceObj.modeOfTranslation
+					this.invalidMode = dataSourceObj.invalidMode
 				}
 			},
-
 			
 			transformLanguageString(languageString){
 				const splittedString = languageString.split('-')
@@ -242,7 +272,7 @@
 
 
 			// storyJsonWithLang only contains the translatable fields
-			// both objects are being compared and key which are not present in storyJsonWithLang are being removed from storyJson
+			// both objects are being compared and those keys which are not present in storyJsonWithLang are being removed from storyJson
 			removeUnwanted(storyJson, storyJsonWithLang){
 				let newStoryJson = {}
 
@@ -256,10 +286,11 @@
 			},
 
 			async sendTranslationRequest() {
+
 				if(this.requestedLanguages.length > 0){ 
 					if(!this.requestedLanguages.includes(this.currentLanguage)){
-						console.log('StoryID', this.story.id)
-						let updatedStory = await fetchStory(this.$route.query.space_id,this.story.id, this.availableLanguages[0].lang);
+					
+						let updatedStory = await fetchStory(this.spaceId,this.story.id, this.availableLanguages[0].lang);
 						let storyObject = updatedStory.storyObj
 						let storyJson = this.removeUnwanted(updatedStory.storyJSON,  updatedStory.storyJSONWithLang)
 						let extractedFields = {...this.extractingFields(storyJson, storyObject)}
@@ -282,8 +313,12 @@
 									url: JSON.parse(storyJson.url)
 								}
 
-								// console.log('converted xml', convertedXml)
-								storyObject = await updateStory( this.$route.query.space_id, this.story.id, JSON.stringify(convertedXml),requestedLanguage);
+								
+								if(this.modeOfTranslation === 'FOLDER_LEVEL')
+									storyObject = await updateStory( this.spaceId, this.story.id, JSON.stringify(convertedXml)); // folder level
+								else
+									storyObject = await updateStory( this.spaceId, this.story.id, JSON.stringify(convertedXml),requestedLanguage);
+
 
 								if(storyObject)
 									this.successMessage();
@@ -293,10 +328,10 @@
 						});
 					}
 					else
-						this.languageErrorMessage('Requested languages should not include source language');
+						this.customErrorMessage('Requested languages should not include source language');
 				}
 				else
-					this.languageErrorMessage('Please select atleast one target language');
+					this.customErrorMessage('Please select atleast one target language');
 			},
 			successMessage() {
 				Notification({
@@ -305,7 +340,7 @@
 				type: 'success',
 				});
 			},
-			languageErrorMessage(_message) {
+			customErrorMessage(_message) {
 				Notification({
 				title: 'Error',
 				message: _message,
@@ -365,4 +400,9 @@
   p{
 	font-size: smaller;
   }
+  .error-text{
+	  color:#F56C6C;
+	  font-weight: bold;
+  }
+
 </style>
