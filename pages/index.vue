@@ -13,24 +13,19 @@
 		
 		<el-row v-else>
 			<p>Content will be translated from: {{ getlangName(currentLanguage) }}</p>
+			<p v-if= getTranslationModeName(modeOfTranslation)>Translation Mode is set to: <strong>{{ getTranslationModeName(modeOfTranslation) }}</strong></p>
+			<p class='error-text' v-else> Please set the translation mode in the Datasource -> Mode Of Translation </p> 
 			
-			<el-row>
-				<p>Mode of Translation: (required)</p>
-
-				<el-radio v-model="translationMode" label="FOLDER_LEVEL">Folder Level</el-radio>
-  			<el-radio v-model="translationMode" label="FIELD_LEVEL">Field Level</el-radio>
-			</el-row>
-
 			<el-row>
 				<p>Translate Into: (required)</p>
 
-				<el-checkbox-group v-for="locale in availableLanguages" :disabled='invalidKey' :key="locale.lang" v-model="requestedLanguages">
+				<el-checkbox-group v-for="locale in availableLanguages" :disabled='invalidKey || invalidMode' :key="locale.lang" v-model="requestedLanguages">
 					<el-checkbox :label="locale.lang"> {{getAvailableLanguagesName(locale.lang)}} </el-checkbox>
 				</el-checkbox-group>
 			</el-row>
 
 			<el-row>
-				<el-button v-on:click="sendTranslationRequest" :disabled='invalidKey' type="primary" size="mini">Translate Content</el-button>
+				<el-button v-on:click="sendTranslationRequest" :disabled='invalidKey || invalidMode' type="primary" size="mini">Translate Content</el-button>
 			</el-row>
 		</el-row>
 		
@@ -44,6 +39,18 @@
 				> Select Datasource with name "Api Key from DeepL" 
 				> Replace "Enter-Api-Key-Here" with your Api Key 
 				> Click save button, second from left.'
+				show-icon
+				:closable="false">
+			</el-alert>
+		</el-row>
+		<el-row v-show="invalidMode">
+			<el-alert
+				title="Invalid Translation Mode."
+				type="error"
+				description='Please enter a valid translation mode:
+				> For folder level translations enter -> FOLDER_LEVEL
+				
+				> For Field level translations enter -> FIELD_LEVEL'
 				show-icon
 				:closable="false">
 			</el-alert>
@@ -64,12 +71,16 @@
 				story: undefined,
 				loadingContext: true,
 				invalidKey: true,
+				invalidMode: true,
 				languagesAvailable: false,
 				currentLanguage: "",
 				apiKey: "",
+				modeOfTranslation: "",
 				availableLanguages: [],
 				requestedLanguages: [],
 				translationMode:'',
+				spaceId: this.$route.query.space_id
+				// spaceId: '157196'
 			};
 		},
 
@@ -86,6 +97,7 @@
 				{
 					action: "tool-changed",
 					tool: "virtual-identity-ag@auto-translations-app",
+					// tool: "virtual-identity-ag@translations-backup-app",
 					event: "getContext",
 				},
 				"https://app.storyblok.com"
@@ -96,6 +108,7 @@
 				{
 					action: "tool-changed",
 					tool: "virtual-identity-ag@auto-translations-app",
+					// tool: "virtual-identity-ag@translations-backup-app",
 					event: "heightChange",
 					height: 500,
 				},
@@ -129,18 +142,28 @@
 				else
 					return langCode
 			},
+			
+			getTranslationModeName(mode){
+				if(mode === "FOLDER_LEVEL")
+					return 'Folder Level'
+				else if (mode === "FIELD_LEVEL")
+					return 'Field Level'
+				else
+					return false
+			},
 
 			getAvailableLanguagesName(code){ return code + " - " + this.getlangName(code);},
 			
 			async initDataSources(){
-				let dataSourceObj = await fetchDataSourceEntries(this.$route.query.space_id)
+				let dataSourceObj = await fetchDataSourceEntries(this.spaceId)
 
 				if(dataSourceObj){
 					this.apiKey = dataSourceObj.apiKey
 					this.invalidKey = dataSourceObj.invalidKey
+					this.modeOfTranslation = dataSourceObj.modeOfTranslation
+					this.invalidMode = dataSourceObj.invalidMode
 				}
 			},
-
 			
 			transformLanguageString(languageString){
 				const splittedString = languageString.split('-')
@@ -264,54 +287,51 @@
 
 			async sendTranslationRequest() {
 
-				if(this.translationMode !== '')
-					if(this.requestedLanguages.length > 0){ 
-						if(!this.requestedLanguages.includes(this.currentLanguage)){
-						
-							let updatedStory = await fetchStory(this.$route.query.space_id,this.story.id, this.availableLanguages[0].lang);
-							let storyObject = updatedStory.storyObj
-							let storyJson = this.removeUnwanted(updatedStory.storyJSON,  updatedStory.storyJSONWithLang)
-							let extractedFields = {...this.extractingFields(storyJson, storyObject)}
-							let sourceLanguage = this.currentLanguage !== "Default Language" ? this.currentLanguage.split("-")[0].toUpperCase() : ""
-							let extractedFieldsXML = this.generateXML(extractedFields) 	// converting json to xml
+				if(this.requestedLanguages.length > 0){ 
+					if(!this.requestedLanguages.includes(this.currentLanguage)){
+					
+						let updatedStory = await fetchStory(this.spaceId,this.story.id, this.availableLanguages[0].lang);
+						let storyObject = updatedStory.storyObj
+						let storyJson = this.removeUnwanted(updatedStory.storyJSON,  updatedStory.storyJSONWithLang)
+						let extractedFields = {...this.extractingFields(storyJson, storyObject)}
+						let sourceLanguage = this.currentLanguage !== "Default Language" ? this.currentLanguage.split("-")[0].toUpperCase() : ""
+						let extractedFieldsXML = this.generateXML(extractedFields) 	// converting json to xml
 
-							this.requestedLanguages.forEach(async (requestedLanguage) => {
-								const response = await deepLTranslate(
-													extractedFieldsXML, requestedLanguage.split("-")[0].trim(),
-													sourceLanguage, this.apiKey,
-												);
-		
-								if (response) {
+						this.requestedLanguages.forEach(async (requestedLanguage) => {
+							const response = await deepLTranslate(
+												extractedFieldsXML, requestedLanguage.split("-")[0].trim(),
+												sourceLanguage, this.apiKey,
+											);
+	
+							if (response) {
 
-									let convertedXml = {
-										...this.convertXMLToJSON(response.translations[0].text, extractedFields),
-										language: requestedLanguage,
-										page: this.story.id+"",
-										text_nodes: JSON.parse(storyJson.text_nodes),
-										url: JSON.parse(storyJson.url)
-									}
-
-									
-									if(this.translationMode === 'FOLDER_LEVEL')
-										storyObject = await updateStory( this.$route.query.space_id, this.story.id, JSON.stringify(convertedXml)); // folder level
-									else
-										storyObject = await updateStory( this.$route.query.space_id, this.story.id, JSON.stringify(convertedXml),requestedLanguage);
-
-
-									if(storyObject)
-										this.successMessage();
-									else
-										this.errorMessage(requestedLanguage)
+								let convertedXml = {
+									...this.convertXMLToJSON(response.translations[0].text, extractedFields),
+									language: requestedLanguage,
+									page: this.story.id+"",
+									text_nodes: JSON.parse(storyJson.text_nodes),
+									url: JSON.parse(storyJson.url)
 								}
-							});
-						}
-						else
-							this.customErrorMessage('Requested languages should not include source language');
+
+								
+								if(this.modeOfTranslation === 'FOLDER_LEVEL')
+									storyObject = await updateStory( this.spaceId, this.story.id, JSON.stringify(convertedXml)); // folder level
+								else
+									storyObject = await updateStory( this.spaceId, this.story.id, JSON.stringify(convertedXml),requestedLanguage);
+
+
+								if(storyObject)
+									this.successMessage();
+								else
+									this.errorMessage(requestedLanguage)
+							}
+						});
 					}
 					else
-						this.customErrorMessage('Please select atleast one target language');
+						this.customErrorMessage('Requested languages should not include source language');
+				}
 				else
-					this.customErrorMessage('Please a select mode of translation');
+					this.customErrorMessage('Please select atleast one target language');
 			},
 			successMessage() {
 				Notification({
@@ -380,4 +400,9 @@
   p{
 	font-size: smaller;
   }
+  .error-text{
+	  color:#F56C6C;
+	  font-weight: bold;
+  }
+
 </style>
