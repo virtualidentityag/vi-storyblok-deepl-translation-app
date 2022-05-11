@@ -1,7 +1,8 @@
 import Storyblok from "./Storyblok-config";
+import axios from 'axios'
 
-export const fetchDataSources = async (spaceId) => {
-    let datasource = await Storyblok.get(`spaces/${spaceId}/datasources`, {"slug": "deepl-api-key"})
+export const fetchDataSources = async (spaceId, datasourceSlug) => {
+    let datasource = await axios.get(`spaces/${spaceId}/datasources`, {"slug": datasourceSlug})
 							.then(response => {
 								return response;
 							}).catch(error => { 
@@ -91,7 +92,7 @@ const dataSourceAlreadyExists = async (entryKey, datasourceName, elementName, da
             }
         }
         else{
-            let datasource = await fetchDataSources(spaceId)
+            let datasource = await fetchDataSources(spaceId, datasourceSlug)
 
             if(datasource){
                 let dataSourceId = datasource.data.datasources.find(element => element.slug === datasourceSlug).id
