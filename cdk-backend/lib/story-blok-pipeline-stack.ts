@@ -27,7 +27,7 @@ export class StoryBlokPipelineStack extends Stack {
           'npm run build',
           'npx cdk synth',
         ],
-        primaryOutputDirectory: "/cdk-backend/cdk.out"
+        primaryOutputDirectory: "/cdk-backend/cdk.out/"
       })
     });
   }}
