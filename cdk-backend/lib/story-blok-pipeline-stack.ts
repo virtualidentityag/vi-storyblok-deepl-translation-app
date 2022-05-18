@@ -20,7 +20,7 @@ export class StoryBlokPipelineStack extends Stack {
      new CodePipeline(this, "Pipeline", {
       pipelineName: "StoryBlokPipeline",
       synth: new ShellStep("Synth", {
-        input: CodePipelineSource.gitHub("virtualidentityag/vi-storyblok-deepl-translation-app", "deployment"),
+        input: CodePipelineSource.gitHub("jp-guedes/vi-storyblok-deepl-translation-app", "deployment"),
         commands: [
           'cd cdk-backend',
           'npm ci',
