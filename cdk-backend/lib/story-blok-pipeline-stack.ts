@@ -22,7 +22,7 @@ export class StoryBlokPipelineStack extends Stack {
           'npm run build',
           'npx cdk synth',
         ],
-        primaryOutputDirectory: "/cdk-backend/cdk.out/"
+        primaryOutputDirectory: "cdk-backend/cdk.out/"
       })
     });
 
@@ -41,8 +41,6 @@ export class StoryBlokPipelineStack extends Stack {
         env: { account: "113510251150", region: "eu-central-1" }
       })
     );
-    
-    
   }
 }
 
