@@ -14,10 +14,11 @@ export class StoryBlokPipelineStack extends Stack {
 
     constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
-     const pipeline = new CodePipeline(this, "Pipeline", {
+     //const pipeline =
+      new CodePipeline(this, "Pipeline", {
       pipelineName: "StoryBlokPipeline",
       synth: new ShellStep("Synth", {
-        input: CodePipelineSource.gitHub("jp-guedes/vi-storyblok-deepl-translation-app", "deployment"),
+        input: CodePipelineSource.gitHub("virtualidentityag/vi-storyblok-deepl-translation-app", "deployment"),
         commands: [
           'cd cdk-backend',
           'npm ci',
