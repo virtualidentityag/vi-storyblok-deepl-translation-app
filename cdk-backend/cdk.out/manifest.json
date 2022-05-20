@@ -1,6 +1,20 @@
 {
   "version": "18.0.0",
   "artifacts": {
+    "assembly-StoryBlokStack-test": {
+      "type": "cdk:cloud-assembly",
+      "properties": {
+        "directoryName": "assembly-StoryBlokStack-test",
+        "displayName": "StoryBlokStack/test"
+      }
+    },
+    "assembly-StoryBlokStack-prod": {
+      "type": "cdk:cloud-assembly",
+      "properties": {
+        "directoryName": "assembly-StoryBlokStack-prod",
+        "displayName": "StoryBlokStack/prod"
+      }
+    },
     "Tree": {
       "type": "cdk:tree",
       "properties": {
@@ -23,7 +37,7 @@
         "validateOnSynth": false,
         "assumeRoleArn": "arn:${AWS::Partition}:iam::113510251150:role/cdk-hnb659fds-deploy-role-113510251150-eu-central-1",
         "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::113510251150:role/cdk-hnb659fds-cfn-exec-role-113510251150-eu-central-1",
-        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-113510251150-eu-central-1/d82a72e2740e1f616479cb27e6def01393d2da6daeeae21300385821408357a1.json",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-113510251150-eu-central-1/138b9b36f2bf65784e59a0cb142c013e6d9acc33ad91527001c3e6028657eeb3.json",
         "requiresBootstrapStackVersion": 6,
         "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
         "additionalDependencies": [
@@ -117,6 +131,60 @@
             "data": "PipelineUpdatePipelineSelfMutateCodePipelineActionRoleDefaultPolicyE626265B"
           }
         ],
+        "/StoryBlokStack/Pipeline/Pipeline/Assets/FileAsset1/CodePipelineActionRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PipelineAssetsFileAsset1CodePipelineActionRoleC0EC649A"
+          }
+        ],
+        "/StoryBlokStack/Pipeline/Pipeline/Assets/FileAsset1/CodePipelineActionRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PipelineAssetsFileAsset1CodePipelineActionRoleDefaultPolicy5F0BE7E8"
+          }
+        ],
+        "/StoryBlokStack/Pipeline/Pipeline/Assets/FileAsset2/CodePipelineActionRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PipelineAssetsFileAsset2CodePipelineActionRole06965A59"
+          }
+        ],
+        "/StoryBlokStack/Pipeline/Pipeline/Assets/FileAsset2/CodePipelineActionRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PipelineAssetsFileAsset2CodePipelineActionRoleDefaultPolicy2399F4BC"
+          }
+        ],
+        "/StoryBlokStack/Pipeline/Pipeline/Assets/FileAsset3/CodePipelineActionRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PipelineAssetsFileAsset3CodePipelineActionRole99229BA9"
+          }
+        ],
+        "/StoryBlokStack/Pipeline/Pipeline/Assets/FileAsset3/CodePipelineActionRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PipelineAssetsFileAsset3CodePipelineActionRoleDefaultPolicy5C399808"
+          }
+        ],
+        "/StoryBlokStack/Pipeline/Pipeline/Assets/FileAsset4/CodePipelineActionRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PipelineAssetsFileAsset4CodePipelineActionRole492E1DB6"
+          }
+        ],
+        "/StoryBlokStack/Pipeline/Pipeline/Assets/FileAsset4/CodePipelineActionRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PipelineAssetsFileAsset4CodePipelineActionRoleDefaultPolicy7F51ED2C"
+          }
+        ],
+        "/StoryBlokStack/Pipeline/Pipeline/test/Manual_Approval_before_production/CodePipelineActionRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PipelinetestManualApprovalbeforeproductionCodePipelineActionRoleB22EA24E"
+          }
+        ],
         "/StoryBlokStack/Pipeline/UpdatePipeline/SelfMutation/Role/Resource": [
           {
             "type": "aws:cdk:logicalId",
@@ -133,6 +201,42 @@
           {
             "type": "aws:cdk:logicalId",
             "data": "PipelineUpdatePipelineSelfMutationDAA41400"
+          }
+        ],
+        "/StoryBlokStack/Pipeline/Assets/FileRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PipelineAssetsFileRole59943A77"
+          }
+        ],
+        "/StoryBlokStack/Pipeline/Assets/FileRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PipelineAssetsFileRoleDefaultPolicy14DB8755"
+          }
+        ],
+        "/StoryBlokStack/Pipeline/Assets/FileAsset1/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PipelineAssetsFileAsset185A67CB4"
+          }
+        ],
+        "/StoryBlokStack/Pipeline/Assets/FileAsset2/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PipelineAssetsFileAsset24D2D639B"
+          }
+        ],
+        "/StoryBlokStack/Pipeline/Assets/FileAsset3/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PipelineAssetsFileAsset3FE71B523"
+          }
+        ],
+        "/StoryBlokStack/Pipeline/Assets/FileAsset4/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PipelineAssetsFileAsset474303B7D"
           }
         ],
         "/StoryBlokStack/CDKMetadata/Default": [

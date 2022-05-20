@@ -1,7 +1,7 @@
 {
   "version": "18.0.0",
   "files": {
-    "d82a72e2740e1f616479cb27e6def01393d2da6daeeae21300385821408357a1": {
+    "138b9b36f2bf65784e59a0cb142c013e6d9acc33ad91527001c3e6028657eeb3": {
       "source": {
         "path": "StoryBlokStack.template.json",
         "packaging": "file"
@@ -9,7 +9,7 @@
       "destinations": {
         "113510251150-eu-central-1": {
           "bucketName": "cdk-hnb659fds-assets-113510251150-eu-central-1",
-          "objectKey": "d82a72e2740e1f616479cb27e6def01393d2da6daeeae21300385821408357a1.json",
+          "objectKey": "138b9b36f2bf65784e59a0cb142c013e6d9acc33ad91527001c3e6028657eeb3.json",
           "region": "eu-central-1",
           "assumeRoleArn": "arn:${AWS::Partition}:iam::113510251150:role/cdk-hnb659fds-file-publishing-role-113510251150-eu-central-1"
         }

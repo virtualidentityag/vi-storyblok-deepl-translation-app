@@ -7,7 +7,7 @@ import {
 } from "aws-cdk-lib/pipelines";
 
 import { Construct } from "constructs";
-import { StoryBlokPipelineStage } from "./story-blok-stage";
+// import { StoryBlokPipelineStage } from "./story-blok-stage";
 
 
 export class StoryBlokPipelineStack extends Stack {
@@ -27,7 +27,7 @@ export class StoryBlokPipelineStack extends Stack {
         primaryOutputDirectory: "cdk-backend/cdk.out/"
       })
     });
-
+/*
     const testingStage = pipeline.addStage(
       new StoryBlokPipelineStage(this, "test", {
         env: { account: "113510251150", region: "eu-central-1" }
@@ -43,6 +43,7 @@ export class StoryBlokPipelineStack extends Stack {
         env: { account: "113510251150", region: "eu-central-1" }
       })
     );
-  
+    */
+    
   }
 }
