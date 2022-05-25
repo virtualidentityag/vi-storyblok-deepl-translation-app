@@ -7,7 +7,7 @@
     "build": "nuxt build",
     "start": "nuxt start",
     "generate": "nuxt generate",
-    "deploy": "npm run build && npm run start"
+    "deploy": "npm ci && npm run build && npm run start"
   },
   "dependencies": {
     "@storyblok/nuxt-auth": "^1.4.0",
