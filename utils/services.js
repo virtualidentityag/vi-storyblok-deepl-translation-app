@@ -118,7 +118,7 @@ export const createDataSource = async (spaceId, name, slug) => {
                                 "slug": slug,
                             }
                         }).then(response => {
-                            console.log(response)
+                            // console.log.response)
                             return response
                         }).catch(error => { 
                             console.log(error)
@@ -135,7 +135,7 @@ export const createDataSourceEntry = async (spaceId, name, value, dataSourceId) 
                                 "datasource_id": dataSourceId
                             }
                         }).then(response => {
-                            console.log(response)
+                            // console.log.response)
                             return response
                         }).catch(error => { 
                             console.log(error)
@@ -159,7 +159,7 @@ export const fetchStory = async (spaceId, storyId, language) => {
         //   language !== "" && language !== "Default Language" ? {lang_code: language} : {}
         )
         .then((response) => {
-            console.log("response of fetched stor", response);
+            // console.log."response of fetched stor", response);
             return response.data;
         })
         .catch((error) => {
@@ -171,7 +171,7 @@ export const fetchStory = async (spaceId, storyId, language) => {
           {lang_code: language}
         )
         .then((response) => {
-            console.log("response of fetched stor", response);
+            // console.log."response of fetched stor", response);
             return response.data;
         })
         .catch((error) => {
@@ -195,6 +195,6 @@ export const  updateStory = async (spaceId, storyId, story, languageCode) => {
         .catch((error) => {
             console.log(error);
         });
-    console.log("updated response", response);
+    // console.log."updated response", response);
     return response;
 }
