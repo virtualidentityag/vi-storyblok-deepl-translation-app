@@ -1,17 +1,12 @@
 export default {
   // Global page headers: https://go.nuxtjs.dev/config-head
-  target: 'static',
+  mode: "universal",
   head: {
     title: 'storyblok-translator-app',
     htmlAttrs: {
       lang: 'en'
     },
-    script: [
-      {
-        src: "https://app.storyblok.com/f/storyblok-v2-latest.js",
-        type: "text/javascript",
-      },
-    ],
+    
     meta: [
       { charset: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
@@ -20,8 +15,6 @@ export default {
     ],
     link: [
       { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
-      { rel: 'preload', type: "text/javascript", href: 'index.js' },
-      { rel: 'preload', type: "text/javascript", href: 'app.js' }
     ]
   },
 
