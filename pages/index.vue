@@ -14,7 +14,7 @@
 		<el-row v-else>
 			<p>Content will be translated from: {{ getlangName(currentLanguage) }}</p>
 			<p v-if= getTranslationModeName(modeOfTranslation)>Translation Mode is set to: <strong>{{ getTranslationModeName(modeOfTranslation) }}</strong></p>
-			<p class='error-text' v-else> Please set the translation mode in the Datasource -> Mode Of Translation </p> 
+			<p class='error-text' v-else> Please set the translation mode in the Datasource -> Mode-Of-Translation </p> 
 			
 			<el-row>
 				<p>Translate Into: (required)</p>
@@ -64,6 +64,7 @@
 	import { deepLTranslate } from './../utils/deepl-services'
 	import { fetchStory, updateStory, fetchDataSourceEntries } from '../utils/services'
 	import { languageCodes } from './../utils/language-codes'
+	import Storyblok from "./../utils/Storyblok-config";
 
 	export default {
 		data() {
@@ -79,8 +80,8 @@
 				availableLanguages: [],
 				requestedLanguages: [],
 				translationMode:'',
-				spaceId: this.$route.query.space_id
-				// spaceId: '157196'
+				spaceId: this.$route.query.space_id,
+				// spaceId: '157196',
 			};
 		},
 
@@ -96,8 +97,8 @@
 			window.parent.postMessage(
 				{
 					action: "tool-changed",
-					tool: "virtual-identity-ag@auto-translations-app",
-					// tool: "virtual-identity-ag@translations-backup-app",
+					// tool: "virtual-identity-ag@auto-translations-app",
+					tool: "virtual-identity-ag@translations-backup-app",
 					event: "getContext",
 				},
 				"https://app.storyblok.com"
@@ -107,8 +108,8 @@
 			window.parent.postMessage(
 				{
 					action: "tool-changed",
-					tool: "virtual-identity-ag@auto-translations-app",
-					// tool: "virtual-identity-ag@translations-backup-app",
+					// tool: "virtual-identity-ag@auto-translations-app",
+					tool: "virtual-identity-ag@translations-backup-app",
 					event: "heightChange",
 					height: 500,
 				},
@@ -285,6 +286,24 @@
 				return newStoryJson
 			},
 
+			// updateLocalStorage(){ // to update the current selected language to the trnaslated language
+				
+			// 	const privateSettings = {"lang":{"160901":"de-de"},"assetFolderStates":{},"editorMinimized":false,"expires":1654951288800}
+				
+			// 	localStorage.setItem("privateSettings", JSON.stringify(privateSettings));
+				
+			// 	// setTimeout(() => { 
+			// 	// 	const page = window.open(`${document.referrer}#!/me/spaces/${this.spaceId}/stories/0/0/${this.story.id}?update=true`); 
+			// 	// 	page.localStorage.setItem("privateSettings",JSON.stringify(privateSettings));
+			// 	// }, 1000)
+
+			// 	console.log('page opened', Storyblok)
+			// },
+			
+			closePage(){
+				setTimeout(() => { window.top.close(`${document.referrer}#!/me/spaces/${this.spaceId}/stories/0/0/${this.story.id}`); }, 1000)
+			},
+
 			async sendTranslationRequest() {
 
 				if(this.requestedLanguages.length > 0){ 
@@ -320,10 +339,21 @@
 									storyObject = await updateStory( this.spaceId, this.story.id, JSON.stringify(convertedXml),requestedLanguage);
 
 
-								if(storyObject)
+								// if(storyObject)
+								// 	this.successMessage();
+								// else
+								// 	this.errorMessage(requestedLanguage)
+								
+								if(storyObject) {
 									this.successMessage();
-								else
+
+									// this.updateLocalStorage();
+									window.open(`${document.referrer}#!/me/spaces/${this.spaceId}/stories/0/0/${this.story.id}?update=true`);
+									this.closePage();
+								}
+								else {
 									this.errorMessage(requestedLanguage)
+								}
 							}
 						});
 					}
