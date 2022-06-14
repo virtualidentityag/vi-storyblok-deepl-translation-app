@@ -1,4 +1,4 @@
-import Storyblok from "./Storyblok-config";
+import Storyblok from "./storyblok-config";
 
 export const fetchDataSources = async (spaceId, datasourceSlug) => {
     let datasource = await Storyblok.get(`spaces/${spaceId}/datasources`, {"slug": datasourceSlug})

@@ -1,5 +1,10 @@
 <template >
-	<div class='fontStyle' v-if="!loadingContext">
+	<div class='bodyFontStyle' v-if="!loadingContext">
+		<!-- <el-row>
+			<el-col :span="12" :offset="12">
+			<el-button icon="el-icon-setting" type='primary' size="mini">Edit Settings</el-button>
+			</el-col>
+		</el-row> -->
 		<el-row v-if="!languagesAvailable">
 			<el-alert
 				title="No languages found"
@@ -16,12 +21,20 @@
 			<p v-if= getTranslationModeName(modeOfTranslation)>Translation Mode is set to: <strong>{{ getTranslationModeName(modeOfTranslation) }}</strong></p>
 			<p class='error-text' v-else> Please set the translation mode in the Datasource -> Mode-Of-Translation </p> 
 			
-			<el-row>
+			<el-row  v-if="modeOfTranslation === 'FIELD_LEVEL'">
 				<p>Translate Into: (required)</p>
 
-				<el-checkbox-group v-for="locale in availableLanguages" :disabled='invalidKey || invalidMode' :key="locale.lang" v-model="requestedLanguages">
+				<el-checkbox-group v-for="locale in availableLanguages" :disabled='invalidKey || invalidMode' :key="locale.lang" v-model="requestedLanguagesForFieldLevel">
 					<el-checkbox :label="locale.lang"> {{getAvailableLanguagesName(locale.lang)}} </el-checkbox>
 				</el-checkbox-group>
+			</el-row>
+
+			<el-row v-else>
+				<p>Translate Into: (required)</p>
+
+				<el-radio-group  v-for="locale in availableLanguages" :disabled='invalidKey || invalidMode' :key="locale.lang" v-model="requestedLanguagesForFolderLevel">
+					<el-radio :label="locale.lang"> {{getAvailableLanguagesName(locale.lang)}} </el-radio>
+				</el-radio-group>
 			</el-row>
 
 			<el-row>
@@ -64,7 +77,7 @@
 	import { deepLTranslate } from './../utils/deepl-services'
 	import { fetchStory, updateStory, fetchDataSourceEntries } from '../utils/services'
 	import { languageCodes } from './../utils/language-codes'
-	import Storyblok from "./../utils/Storyblok-config";
+
 
 	export default {
 		data() {
@@ -78,7 +91,8 @@
 				apiKey: "",
 				modeOfTranslation: "",
 				availableLanguages: [],
-				requestedLanguages: [],
+				requestedLanguagesForFieldLevel: [],
+				requestedLanguagesForFolderLevel: "",
 				translationMode:'',
 				spaceId: this.$route.query.space_id,
 				// spaceId: '157196',
@@ -304,10 +318,74 @@
 				setTimeout(() => { window.top.close(`${document.referrer}#!/me/spaces/${this.spaceId}/stories/0/0/${this.story.id}`); }, 1000)
 			},
 
+			
+			
+			async folderLevelTranslationRequest(storyObject, storyJson, extractedFields, extractedFieldsXML, sourceLanguage ){
+					const response = await deepLTranslate(
+										extractedFieldsXML, this.requestedLanguagesForFolderLevel.split("-")[0].trim(),
+										sourceLanguage, this.apiKey,
+									);
+
+					if (response) {
+
+						let convertedXml = {
+							...this.convertXMLToJSON(response.translations[0].text, extractedFields),
+							language: this.requestedLanguagesForFolderLevel,
+							page: this.story.id+"",
+							text_nodes: JSON.parse(storyJson.text_nodes),
+							url: JSON.parse(storyJson.url)
+						}
+
+						storyObject = await updateStory( this.spaceId, this.story.id, JSON.stringify(convertedXml)); // folder level
+
+						if(storyObject) {
+							this.successMessage();
+
+							window.open(`${document.referrer}#!/me/spaces/${this.spaceId}/stories/0/0/${this.story.id}?update=true`);
+							this.closePage();
+						}
+						else {
+							this.languageErrorMessage(this.requestedLanguagesForFolderLevel)
+						}
+					}
+			},
+
+			async fieldLevelTranslationRequest(storyObject, storyJson, extractedFields, extractedFieldsXML, sourceLanguage ){
+				this.requestedLanguagesForFieldLevel.forEach(async (requestedLanguage) => {
+					const response = await deepLTranslate(
+										extractedFieldsXML, requestedLanguage.split("-")[0].trim(),
+										sourceLanguage, this.apiKey,
+									);
+
+					if (response) {
+
+						let convertedXml = {
+							...this.convertXMLToJSON(response.translations[0].text, extractedFields),
+							language: requestedLanguage,
+							page: this.story.id+"",
+							text_nodes: JSON.parse(storyJson.text_nodes),
+							url: JSON.parse(storyJson.url)
+						}
+
+						storyObject = await updateStory( this.spaceId, this.story.id, JSON.stringify(convertedXml),requestedLanguage);
+
+						if(storyObject) {
+							this.successMessage();
+
+							window.open(`${document.referrer}#!/me/spaces/${this.spaceId}/stories/0/0/${this.story.id}?update=true`);
+							this.closePage();
+						}
+						else {
+							this.languageErrorMessage(requestedLanguage)
+						}
+					}
+				});
+			},
+
 			async sendTranslationRequest() {
 
-				if(this.requestedLanguages.length > 0){ 
-					if(!this.requestedLanguages.includes(this.currentLanguage)){
+				if(this.requestedLanguagesForFieldLevel.length > 0 || this.requestedLanguagesForFolderLevel !== ""){ 
+					if(!this.requestedLanguagesForFieldLevel.includes(this.currentLanguage)){
 					
 						let updatedStory = await fetchStory(this.spaceId,this.story.id, this.availableLanguages[0].lang);
 						let storyObject = updatedStory.storyObj
@@ -316,46 +394,47 @@
 						let sourceLanguage = this.currentLanguage !== "Default Language" ? this.currentLanguage.split("-")[0].toUpperCase() : ""
 						let extractedFieldsXML = this.generateXML(extractedFields) 	// converting json to xml
 
-						this.requestedLanguages.forEach(async (requestedLanguage) => {
-							const response = await deepLTranslate(
-												extractedFieldsXML, requestedLanguage.split("-")[0].trim(),
-												sourceLanguage, this.apiKey,
-											);
+
+						if(this.modeOfTranslation === 'FOLDER_LEVEL')
+							this.folderLevelTranslationRequest(storyObject, storyJson, extractedFields, extractedFieldsXML, sourceLanguage );
+						else
+							this.fieldLevelTranslationRequest(storyObject, storyJson, extractedFields, extractedFieldsXML, sourceLanguage );
+
+						// this.requestedLanguagesForFieldLevel.forEach(async (requestedLanguage) => {
+						// 	const response = await deepLTranslate(
+						// 						extractedFieldsXML, requestedLanguage.split("-")[0].trim(),
+						// 						sourceLanguage, this.apiKey,
+						// 					);
 	
-							if (response) {
+						// 	if (response) {
 
-								let convertedXml = {
-									...this.convertXMLToJSON(response.translations[0].text, extractedFields),
-									language: requestedLanguage,
-									page: this.story.id+"",
-									text_nodes: JSON.parse(storyJson.text_nodes),
-									url: JSON.parse(storyJson.url)
-								}
+						// 		let convertedXml = {
+						// 			...this.convertXMLToJSON(response.translations[0].text, extractedFields),
+						// 			language: requestedLanguage,
+						// 			page: this.story.id+"",
+						// 			text_nodes: JSON.parse(storyJson.text_nodes),
+						// 			url: JSON.parse(storyJson.url)
+						// 		}
 
 								
-								if(this.modeOfTranslation === 'FOLDER_LEVEL')
-									storyObject = await updateStory( this.spaceId, this.story.id, JSON.stringify(convertedXml)); // folder level
-								else
-									storyObject = await updateStory( this.spaceId, this.story.id, JSON.stringify(convertedXml),requestedLanguage);
-
-
-								// if(storyObject)
-								// 	this.successMessage();
+								// if(this.modeOfTranslation === 'FOLDER_LEVEL')
+								// 	storyObject = await updateStory( this.spaceId, this.story.id, JSON.stringify(convertedXml)); // folder level
 								// else
-								// 	this.errorMessage(requestedLanguage)
-								
-								if(storyObject) {
-									this.successMessage();
+								// 	storyObject = await updateStory( this.spaceId, this.story.id, JSON.stringify(convertedXml),requestedLanguage);
 
-									// this.updateLocalStorage();
-									window.open(`${document.referrer}#!/me/spaces/${this.spaceId}/stories/0/0/${this.story.id}?update=true`);
-									this.closePage();
-								}
-								else {
-									this.errorMessage(requestedLanguage)
-								}
-							}
-						});
+						// 		if(storyObject) {
+						// 			this.successMessage();
+
+						// 			// this.updateLocalStorage();
+						// 			window.open(`${document.referrer}#!/me/spaces/${this.spaceId}/stories/0/0/${this.story.id}?update=true`);
+						// 			this.closePage();
+						// 		}
+						// 		else {
+						// 			this.languageErrorMessage(requestedLanguage)
+						// 		}
+						// 	}
+						// });
+						
 					}
 					else
 						this.customErrorMessage('Requested languages should not include source language');
@@ -377,7 +456,7 @@
 				type: 'error',
 				});
 			},
-			errorMessage(lang){
+			languageErrorMessage(lang){
 				Notification({
 				title: 'Error',
 				message: `Error occurred for language ${this.getlangName(lang)}. Please try again later.`,
@@ -396,7 +475,7 @@
   .el-row:last-child {
       margin-bottom: 0;
   }
-  .fontStyle{
+  .bodyFontStyle{
 	  font-family: sans-serif;
   }
   .el-notification__title {
@@ -427,6 +506,11 @@
     transition: opacity .3s,transform .3s,left .3s,right .3s,top .4s,bottom .3s;
     overflow: hidden;
   }
+  .el-radio-button__inner,
+  .el-radio-group {
+	display: block;
+	margin-bottom: 2px
+ }
   p{
 	font-size: smaller;
   }
