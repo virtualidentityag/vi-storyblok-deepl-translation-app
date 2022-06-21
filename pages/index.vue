@@ -4,7 +4,7 @@
       <ConfigurationScreen
         @close="switchTabs"
         @updateApiKey="updateApiKey"
-        @updateMode="updateMode"
+        @updateTranslationMode="updateTranslationMode"
         :deeplKey="apiKey"
         :mode="modeOfTranslation"
         :deeplKeyObj="apiKeyObj"
@@ -231,8 +231,8 @@ export default {
       this.apiKey = apiValues.key;
       this.apiKeyObj = { ...apiValues.obj };
     },
-    updateMode(translationModeObj) {
-      // this.invalidMode = true;if(key.value.trim() === datasourceInitialValue.split('-OR-')[0] || key.value.trim() === datasourceInitialValue.split('-OR-')[1]){
+
+    updateTranslationMode(translationModeObj) {
       if (
         translationModeObj.mode.trim() !== "FOLDER_LEVEL" &&
         translationModeObj.mode.trim() !== "FIELD_LEVEL"

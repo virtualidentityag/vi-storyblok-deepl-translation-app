@@ -191,7 +191,7 @@ export default {
               obj: this.ruleForm.apiKeyObj,
             });
           } else
-            this.$emit("updateMode", {
+            this.$emit("updateTranslationMode", {
               mode: this.ruleForm.modeOfTranslation,
               obj: this.ruleForm.modeOfTranslationObj,
             });
