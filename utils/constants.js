@@ -1,0 +1,4 @@
+export const FIELD_LEVEL = 'FIELD_LEVEL'
+export const FOLDER_LEVEL = 'FOLDER_LEVEL'
+export const MODE_INITIAL_VALUE = 'FOLDER_LEVEL-OR-FIELD_LEVEL'
+export const API_KEY_INITIAL_VALUE = 'Enter-Api-Key-Here'
