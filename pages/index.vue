@@ -33,7 +33,7 @@
                 type="primary"
                 size="mini"
                 v-on:click="switchTabs"
-                >Edit Settings</el-button
+                >Edit Configuration</el-button
               >
             </el-col>
           </el-row>
