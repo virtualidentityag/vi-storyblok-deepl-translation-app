@@ -27,13 +27,13 @@
 
         <el-row v-else>
           <el-row>
-            <el-col :span="6" :offset="14">
+            <el-col :span="6" :offset="11">
               <el-button
                 icon="el-icon-setting"
                 type="primary"
                 size="mini"
                 v-on:click="switchTabs"
-                >Edit Settings</el-button
+                >Edit Configuration</el-button
               >
             </el-col>
           </el-row>
