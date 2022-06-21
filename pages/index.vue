@@ -136,6 +136,7 @@ import {
 import { languageCodes } from "./../utils/language-codes";
 
 import ConfigurationScreen from "./../components/ConfigurationScreen.vue";
+import { API_KEY_INITIAL_VALUE } from "../utils/constants";
 
 export default {
   name: "index",
@@ -222,6 +223,11 @@ export default {
     },
 
     updateApiKey(apiValues) {
+      if (apiValues.key !== API_KEY_INITIAL_VALUE) {
+        this.invalidKey = false;
+      } else {
+        this.invalidKey = true;
+      }
       this.apiKey = apiValues.key;
       this.apiKeyObj = { ...apiValues.obj };
     },
