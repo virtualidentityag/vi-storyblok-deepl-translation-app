@@ -1,4 +1,4 @@
-<template >
+<template>
   <div class="bodyFontStyle">
     <el-row>
       <el-col :span="12">
@@ -14,48 +14,129 @@
         >
       </el-col>
     </el-row>
-    <el-form ref="form" :model="form" size="mini">
+    <el-form :model="ruleForm" size="mini" class="demo-ruleForm">
       <el-col>
-        <el-form-item label="Api Key">
-          <el-input v-model="form.apiKey"></el-input>
+        <!-- <el-form-item label="Api Key" required prop="Api Key"> -->
+        <el-form-item label="Deepl Api Key" required>
+          <el-input v-model="ruleForm.apiKey"></el-input>
         </el-form-item>
         <el-form-item>
           <el-button
             type="primary"
             size="mini"
             @click="
-              handleSubmit({
-                ...form.apiKeyObj,
-                value: form.apiKey.trim(),
-              })
+              handleSubmit(
+                {
+                  ...ruleForm.apiKeyObj,
+                  value: ruleForm.apiKey.trim(),
+                },
+                'Api Key'
+              )
             "
             >Update</el-button
           >
         </el-form-item>
-        <el-form-item label="Mode Of translation">
-          <el-input v-model="form.modeOfTranslation"></el-input>
-        </el-form-item>
+        <!-- <el-form-item label="Translation Mode" required prop="Api Key"> -->
+        <el-row>
+          <p>Mode of Translation: (required)</p>
+
+          <el-radio
+            v-model="ruleForm.modeOfTranslation"
+            :label="mode.value"
+            v-for="mode in ruleForm.translationModes"
+            :key="mode.value"
+          >
+            {{ mode.label }}
+          </el-radio>
+        </el-row>
+        <!-- </el-form-item> -->
         <el-form-item>
           <el-button
             type="primary"
             size="mini"
             @click="
-              handleSubmit({
-                ...form.modeOfTranslationObj,
-                value: form.modeOfTranslation.trim(),
-              })
+              handleSubmit(
+                {
+                  ...ruleForm.modeOfTranslationObj,
+                  value: ruleForm.modeOfTranslation.trim(),
+                },
+                'Translation Mode'
+              )
             "
             >Update</el-button
           >
         </el-form-item>
       </el-col>
     </el-form>
+    <!-- <el-form
+      :model="ruleForm"
+      :rules="rules"
+      ref="ruleForm"
+      size="mini"
+      class="demo-ruleForm"
+    >
+      <el-form-item label="Deepl Api Key" prop="apiKey">
+        <el-input v-model="ruleForm.apiKey"></el-input>
+      </el-form-item>
+      <el-form-item>
+        <el-button
+          type="primary"
+          @click="
+            handleSubmit(
+              {
+                ...ruleForm.apiKeyObj,
+                value: ruleForm.apiKey.trim(),
+              },
+              'ruleForm',
+              'apiKey'
+            )
+          "
+          >Update</el-button
+        >
+      </el-form-item>
+      <el-form-item label="Translation Mode" prop="modeOfTranslation">
+        <el-select
+          v-model="ruleForm.modeOfTranslation"
+          placeholder="Please select your preferred translation mode"
+        >
+          <el-option
+            :value="mode.value"
+            v-for="mode in ruleForm.translationModes"
+            :key="mode.value"
+          >
+            {{ mode.label }}
+          </el-option>
+        </el-select>
+      </el-form-item>
+
+      <el-form-item>
+        <el-button
+          type="primary"
+          @click="
+            handleSubmit(
+              {
+                ...ruleForm.modeOfTranslationObj,
+                value: ruleForm.modeOfTranslation.trim(),
+              },
+              'ruleForm',
+              'modeOfTranslation'
+            )
+          "
+          >Update</el-button
+        >
+      </el-form-item>
+    </el-form> -->
   </div>
 </template>
-
 <script>
 import { Notification } from "element-ui";
 import { updateDataSourceEntries } from "../utils/services";
+import {
+  FIELD_LEVEL,
+  FOLDER_LEVEL,
+  MODE_INITIAL_VALUE,
+  API_KEY_INITIAL_VALUE,
+} from "../utils/constants";
 
 export default {
   name: "ConfigurationScreen",
@@ -63,11 +144,32 @@ export default {
   data() {
     return {
       spaceId: this.$route.query.space_id,
-      form: {
-        apiKey: this.deeplKey,
+
+      ruleForm: {
+        apiKey: this.deeplKey === API_KEY_INITIAL_VALUE ? "" : this.deeplKey,
         apiKeyObj: this.deeplKeyObj,
-        modeOfTranslation: this.mode,
+        modeOfTranslation: this.mode === MODE_INITIAL_VALUE ? "" : this.mode,
         modeOfTranslationObj: this.modeObj,
+        translationModes: [
+          { value: FIELD_LEVEL, label: "Field Level" },
+          { value: FOLDER_LEVEL, label: "Folder Level" },
+        ],
+      },
+      rules: {
+        apiKey: [
+          {
+            required: true,
+            message: "Please input Deepl Api Key",
+            trigger: "blur",
+          },
+        ],
+        modeOfTranslation: [
+          {
+            required: true,
+            message: "Please select translation mode",
+            trigger: "change",
+          },
+        ],
       },
     };
   },
@@ -75,23 +177,42 @@ export default {
   // mounted() {},
 
   methods: {
-    async handleSubmit(dataSourceObj) {
-      console.log("first", dataSourceObj);
-      let response = await updateDataSourceEntries(this.spaceId, dataSourceObj);
-      if (response.status === 204) {
-        this.successMessage();
-        if (dataSourceObj.name === "Deepl-Api-key") {
-          this.$emit("updateApiKey", {
-            key: this.form.apiKey,
-            obj: this.form.apiKeyObj,
-          });
-        } else
-          this.$emit("updateMode", {
-            mode: this.form.modeOfTranslation,
-            obj: this.form.modeOfTranslationObj,
-          });
-      } else this.errorMessage();
+    async handleSubmit(dataSourceObj, field) {
+      if (dataSourceObj.value !== "") {
+        let response = await updateDataSourceEntries(
+          this.spaceId,
+          dataSourceObj
+        );
+        if (response.status === 204) {
+          this.successMessage();
+          if (dataSourceObj.name === "Deepl-Api-key") {
+            this.$emit("updateApiKey", {
+              key: this.ruleForm.apiKey,
+              obj: this.ruleForm.apiKeyObj,
+            });
+          } else
+            this.$emit("updateMode", {
+              mode: this.ruleForm.modeOfTranslation,
+              obj: this.ruleForm.modeOfTranslationObj,
+            });
+        } else this.errorMessage();
+      } else {
+        this.errorMessage(`${field} cannot be empty`);
+      }
     },
+    // async handleSubmit(dataSourceObj, formRules, key) {
+    //   this.$refs[formRules].validate((valid, fieldErrorObj) => {
+    //     // console.log("first", valid, fieldErrorObj, dataSourceObj);
+    //     if (fieldErrorObj[key]) {
+    //       if (valid) {
+    //         alert("submit!");
+    //       } else {
+    //         console.log("error submit!!", fieldErrorObj);
+    //         return false;
+    //       }
+    //     }
+    //   });
+    // },
 
     closeSettings() {
       this.$emit("close");
@@ -108,7 +229,8 @@ export default {
     errorMessage(_message) {
       Notification({
         title: "Error",
-        message: "Something went wrong, try again later.",
+        // file?.image ?? URL.createObjectURL(file)
+        message: _message ?? "Something went wrong, try again later.",
         type: "error",
       });
     },
@@ -163,5 +285,11 @@ p {
 .error-text {
   color: #f56c6c;
   font-weight: bold;
+}
+.el-select {
+  width: 100%;
+}
+.el-select-dropdown__item {
+  font-family: sans-serif;
 }
 </style>
