@@ -1,6 +1,6 @@
 <template>
   <div class="bodyFontStyle">
-    <el-row>
+    <!-- <el-row>
       <el-col :span="12">
         <p>Configuration screen</p>
       </el-col>
@@ -13,7 +13,7 @@
           >Close</el-button
         >
       </el-col>
-    </el-row>
+    </el-row> -->
     <el-form :model="ruleForm" size="mini" class="demo-ruleForm">
       <el-col>
         <!-- <el-form-item label="Api Key" required prop="Api Key"> -->
