@@ -14,31 +14,23 @@
         >
       </el-col>
     </el-row>
-    <el-form :model="ruleForm" size="mini" class="demo-ruleForm">
+    <el-form
+      :rules="rules"
+      :model="ruleForm"
+      ref="ruleForm"
+      size="mini"
+      class="demo-ruleForm"
+    >
       <el-col>
-        <!-- <el-form-item label="Api Key" required prop="Api Key"> -->
-        <el-form-item label="Deepl Api Key" required>
+        <el-form-item label="Deepl Api Key" required prop="apiKey">
           <el-input v-model="ruleForm.apiKey"></el-input>
         </el-form-item>
-        <el-form-item>
-          <el-button
-            type="primary"
-            size="mini"
-            @click="
-              handleSubmit(
-                {
-                  ...ruleForm.apiKeyObj,
-                  value: ruleForm.apiKey.trim(),
-                },
-                'Api Key'
-              )
-            "
-            >Update</el-button
-          >
-        </el-form-item>
-        <!-- <el-form-item label="Translation Mode" required prop="Api Key"> -->
         <el-row>
-          <p>Mode of Translation: (required)</p>
+          <el-form-item
+            label="Translation Mode"
+            required
+            prop="modeOfTranslation"
+          ></el-form-item>
 
           <el-radio
             v-model="ruleForm.modeOfTranslation"
@@ -49,83 +41,14 @@
             {{ mode.label }}
           </el-radio>
         </el-row>
-        <!-- </el-form-item> -->
+
         <el-form-item>
-          <el-button
-            type="primary"
-            size="mini"
-            @click="
-              handleSubmit(
-                {
-                  ...ruleForm.modeOfTranslationObj,
-                  value: ruleForm.modeOfTranslation.trim(),
-                },
-                'Translation Mode'
-              )
-            "
+          <el-button type="primary" @click="handleSubmit('ruleForm')"
             >Update</el-button
           >
         </el-form-item>
       </el-col>
     </el-form>
-    <!-- <el-form
-      :model="ruleForm"
-      :rules="rules"
-      ref="ruleForm"
-      size="mini"
-      class="demo-ruleForm"
-    >
-      <el-form-item label="Deepl Api Key" prop="apiKey">
-        <el-input v-model="ruleForm.apiKey"></el-input>
-      </el-form-item>
-      <el-form-item>
-        <el-button
-          type="primary"
-          @click="
-            handleSubmit(
-              {
-                ...ruleForm.apiKeyObj,
-                value: ruleForm.apiKey.trim(),
-              },
-              'ruleForm',
-              'apiKey'
-            )
-          "
-          >Update</el-button
-        >
-      </el-form-item>
-      <el-form-item label="Translation Mode" prop="modeOfTranslation">
-        <el-select
-          v-model="ruleForm.modeOfTranslation"
-          placeholder="Please select your preferred translation mode"
-        >
-          <el-option
-            :value="mode.value"
-            v-for="mode in ruleForm.translationModes"
-            :key="mode.value"
-          >
-            {{ mode.label }}
-          </el-option>
-        </el-select>
-      </el-form-item>
-
-      <el-form-item>
-        <el-button
-          type="primary"
-          @click="
-            handleSubmit(
-              {
-                ...ruleForm.modeOfTranslationObj,
-                value: ruleForm.modeOfTranslation.trim(),
-              },
-              'ruleForm',
-              'modeOfTranslation'
-            )
-          "
-          >Update</el-button
-        >
-      </el-form-item>
-    </el-form> -->
   </div>
 </template>
 <script>
@@ -174,62 +97,67 @@ export default {
     };
   },
 
-  // mounted() {},
-
   methods: {
-    async handleSubmit(dataSourceObj, field) {
-      if (dataSourceObj.value !== "") {
-        let response = await updateDataSourceEntries(
-          this.spaceId,
-          dataSourceObj
-        );
-        if (response.status === 204) {
-          this.successMessage();
-          if (dataSourceObj.name === "Deepl-Api-key") {
-            this.$emit("updateApiKey", {
-              key: this.ruleForm.apiKey,
-              obj: this.ruleForm.apiKeyObj,
+    async handleSubmit(form) {
+      this.$refs[form].validate(async (valid, fieldErrorObj) => {
+        if (valid) {
+          const updatedValues = [];
+
+          if (this.ruleForm.apiKey !== this.deeplKey)
+            updatedValues.push({
+              ...this.ruleForm.apiKeyObj,
+              value: this.ruleForm.apiKey,
             });
-          } else
-            this.$emit("updateTranslationMode", {
-              mode: this.ruleForm.modeOfTranslation,
-              obj: this.ruleForm.modeOfTranslationObj,
+
+          if (this.ruleForm.modeOfTranslation !== this.mode)
+            updatedValues.push({
+              ...this.ruleForm.modeOfTranslationObj,
+              value: this.ruleForm.modeOfTranslation,
             });
-        } else this.errorMessage();
-      } else {
-        this.errorMessage(`${field} cannot be empty`);
-      }
+
+          updatedValues.forEach(async (datasourceEntry) => {
+            let response = await updateDataSourceEntries(
+              this.spaceId,
+              datasourceEntry
+            );
+
+            if (response.status === 204) {
+              this.successMessage(datasourceEntry.name);
+
+              if (datasourceEntry.name === "Deepl-Api-key") {
+                this.$emit("updateApiKey", {
+                  key: this.ruleForm.apiKey,
+                  obj: this.ruleForm.apiKeyObj,
+                });
+              } else {
+                this.$emit("updateTranslationMode", {
+                  mode: this.ruleForm.modeOfTranslation,
+                  obj: this.ruleForm.modeOfTranslationObj,
+                });
+              }
+            } else this.errorMessage();
+          });
+        } else {
+          console.log("error submit!!", fieldErrorObj);
+          return false;
+        }
+      });
     },
-    // async handleSubmit(dataSourceObj, formRules, key) {
-    //   this.$refs[formRules].validate((valid, fieldErrorObj) => {
-    //     // console.log("first", valid, fieldErrorObj, dataSourceObj);
-    //     if (fieldErrorObj[key]) {
-    //       if (valid) {
-    //         alert("submit!");
-    //       } else {
-    //         console.log("error submit!!", fieldErrorObj);
-    //         return false;
-    //       }
-    //     }
-    //   });
-    // },
 
     closeSettings() {
       this.$emit("close");
     },
 
-    successMessage() {
+    successMessage(dataSource) {
       Notification({
         title: "Success",
-        message: "Configurations updated successfully!",
+        message: `${dataSource} updated successfully!`,
         type: "success",
-        // duration: 0,
       });
     },
     errorMessage(_message) {
       Notification({
         title: "Error",
-        // file?.image ?? URL.createObjectURL(file)
         message: _message ?? "Something went wrong, try again later.",
         type: "error",
       });
@@ -278,18 +206,11 @@ export default {
   overflow: hidden;
 }
 p {
-  /* font-size: smaller; */
   font-size: 14px;
   color: #606266;
 }
 .error-text {
   color: #f56c6c;
   font-weight: bold;
-}
-.el-select {
-  width: 100%;
-}
-.el-select-dropdown__item {
-  font-family: sans-serif;
 }
 </style>
