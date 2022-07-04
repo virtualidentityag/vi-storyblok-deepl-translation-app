@@ -28,15 +28,32 @@
             <el-alert
               title="No languages found"
               type="error"
-              description="Please setup field level translation and add languages to use the application. 
+              description="Please setup translation mode and add languages to use the application. 
           For more info visit: https://www.storyblok.com/docs/guide/in-depth/internationalization"
-              show-icon
+              :closable="false"
+            >
+            </el-alert>
+          </el-row>
+          <el-row v-show="invalidKey">
+            <el-alert
+              title="Invalid key."
+              type="error"
+              description="Please enter a valid DeepL api key in app configuration."
+              :closable="false"
+            >
+            </el-alert>
+          </el-row>
+          <el-row v-show="invalidMode">
+            <el-alert
+              title="Invalid Translation Mode."
+              type="error"
+              description="Please select a valid translation mode from app configuration."
               :closable="false"
             >
             </el-alert>
           </el-row>
 
-          <p>
+          <p v-if="languagesAvailable">
             Content will be translated from:
             {{ getlangName(currentLanguage) }}
           </p>
@@ -47,7 +64,7 @@
           </p>
 
           <el-row v-if="modeOfTranslation === 'FIELD_LEVEL'">
-            <p>Translate Into: (required)</p>
+            <p v-if="languagesAvailable">Translate Into: (required)</p>
 
             <el-checkbox-group
               v-for="locale in availableLanguages"
@@ -62,7 +79,7 @@
           </el-row>
 
           <el-row v-else>
-            <p>Translate Into: (required)</p>
+            <p v-if="languagesAvailable">Translate Into: (required)</p>
 
             <el-radio-group
               v-for="locale in availableLanguages"
@@ -78,6 +95,7 @@
 
           <el-row>
             <el-button
+              v-if="languagesAvailable"
               v-on:click="sendTranslationRequest"
               :disabled="invalidKey || invalidMode"
               type="primary"
@@ -85,27 +103,6 @@
             >
               Translate
             </el-button>
-          </el-row>
-
-          <el-row v-show="invalidKey">
-            <el-alert
-              title="Invalid key."
-              type="error"
-              description="Please enter a valid DeepL api key in app configuration."
-              show-icon
-              :closable="false"
-            >
-            </el-alert>
-          </el-row>
-          <el-row v-show="invalidMode">
-            <el-alert
-              title="Invalid Translation Mode."
-              type="error"
-              description="Please select a valid translation mode from app configuration."
-              show-icon
-              :closable="false"
-            >
-            </el-alert>
           </el-row>
         </div>
         <div v-else v-loading="true"></div>
@@ -674,5 +671,8 @@ span {
 }
 .clearfix:after {
   clear: both;
+}
+.box-card {
+  width: 300px;
 }
 </style>
