@@ -1,103 +1,128 @@
 <template >
-  <div class="bodyFontStyle" v-if="!loadingContext">
-    <!-- <el-row>
-			<el-col :span="12" :offset="12">
-			<el-button icon="el-icon-setting" type='primary' size="mini">Edit Settings</el-button>
-			</el-col>
-		</el-row> -->
-    <el-row v-if="!languagesAvailable">
-      <el-alert
-        title="No languages found"
-        type="error"
-        description="Please setup field level translation and add languages to use the application. 
+  <div>
+    <div v-if="showConfigurationScreen">
+      <ConfigurationScreen
+        @close="switchTabs"
+        @updateApiKey="updateApiKey"
+        @updateTranslationMode="updateTranslationMode"
+        :deeplKey="apiKey"
+        :mode="modeOfTranslation"
+        :deeplKeyObj="apiKeyObj"
+        :modeObj="modeOfTranslationObj"
+      />
+    </div>
+    <div v-if="!showConfigurationScreen">
+      <div class="bodyFontStyle" v-if="!loadingContext">
+        <el-row v-if="!languagesAvailable">
+          <el-alert
+            title="No languages found"
+            type="error"
+            description="Please setup field level translation and add languages to use the application. 
 				For more info visit: https://www.storyblok.com/docs/guide/in-depth/internationalization"
-        show-icon
-        :closable="false"
-      >
-      </el-alert>
-    </el-row>
+            show-icon
+            :closable="false"
+          >
+          </el-alert>
+        </el-row>
 
-    <el-row v-else>
-      <p>Content will be translated from: {{ getlangName(currentLanguage) }}</p>
-      <p v-if="getTranslationModeName(modeOfTranslation)">
-        Translation Mode is set to:
-        <strong>{{ getTranslationModeName(modeOfTranslation) }}</strong>
-      </p>
-      <p class="error-text" v-else>
-        Please set the translation mode in the Datasource -> Mode-Of-Translation
-      </p>
+        <el-row v-else>
+          <el-row>
+            <el-col :span="6" :offset="11">
+              <el-button
+                icon="el-icon-setting"
+                type="primary"
+                size="mini"
+                v-on:click="switchTabs"
+                >Edit Configuration</el-button
+              >
+            </el-col>
+          </el-row>
+          <p>
+            Content will be translated from: {{ getlangName(currentLanguage) }}
+          </p>
+          <p v-if="getTranslationModeName(modeOfTranslation)">
+            Translation Mode is set to:
+            <strong>{{ getTranslationModeName(modeOfTranslation) }}</strong>
+          </p>
+          <p class="error-text" v-else>
+            Please set the translation mode in the Datasource ->
+            Mode-Of-Translation
+          </p>
 
-      <el-row v-if="modeOfTranslation === 'FIELD_LEVEL'">
-        <p>Translate Into: (required)</p>
+          <el-row v-if="modeOfTranslation === 'FIELD_LEVEL'">
+            <p>Translate Into: (required)</p>
 
-        <el-checkbox-group
-          v-for="locale in availableLanguages"
-          :disabled="invalidKey || invalidMode"
-          :key="locale.lang"
-          v-model="requestedLanguagesForFieldLevel"
-        >
-          <el-checkbox :label="locale.lang">
-            {{ getAvailableLanguagesName(locale.lang) }}
-          </el-checkbox>
-        </el-checkbox-group>
-      </el-row>
+            <el-checkbox-group
+              v-for="locale in availableLanguages"
+              :disabled="invalidKey || invalidMode"
+              :key="locale.lang"
+              v-model="requestedLanguagesForFieldLevel"
+            >
+              <el-checkbox :label="locale.lang">
+                {{ getAvailableLanguagesName(locale.lang) }}
+              </el-checkbox>
+            </el-checkbox-group>
+          </el-row>
 
-      <el-row v-else>
-        <p>Translate Into: (required)</p>
+          <el-row v-else>
+            <p>Translate Into: (required)</p>
 
-        <el-radio-group
-          v-for="locale in availableLanguages"
-          :disabled="invalidKey || invalidMode"
-          :key="locale.lang"
-          v-model="requestedLanguagesForFolderLevel"
-        >
-          <el-radio :label="locale.lang">
-            {{ getAvailableLanguagesName(locale.lang) }}
-          </el-radio>
-        </el-radio-group>
-      </el-row>
+            <el-radio-group
+              v-for="locale in availableLanguages"
+              :disabled="invalidKey || invalidMode"
+              :key="locale.lang"
+              v-model="requestedLanguagesForFolderLevel"
+            >
+              <el-radio :label="locale.lang">
+                {{ getAvailableLanguagesName(locale.lang) }}
+              </el-radio>
+            </el-radio-group>
+          </el-row>
 
-      <el-row>
-        <el-button
-          v-on:click="sendTranslationRequest"
-          :disabled="invalidKey || invalidMode"
-          type="primary"
-          size="mini"
-          >Translate Content</el-button
-        >
-      </el-row>
-    </el-row>
+          <el-row>
+            <el-button
+              v-on:click="sendTranslationRequest"
+              :disabled="invalidKey || invalidMode"
+              type="primary"
+              size="mini"
+            >
+              Translate Content
+            </el-button>
+          </el-row>
+        </el-row>
 
-    <el-row v-show="invalidKey">
-      <el-alert
-        title="Invalid key. Please enter a valid DeepL api key"
-        type="error"
-        description='Please enter a valid DeepL api key in the Datasources. Follow the steps as follows:
+        <el-row v-show="invalidKey">
+          <el-alert
+            title="Invalid key. Please enter a valid DeepL api key"
+            type="error"
+            description='Please enter a valid DeepL api key in the Datasources. Follow the steps as follows:
 				  Go back to the dashboard of your space
 				> Select Datasources from sidebar
 				> Select Datasource with name "Api Key from DeepL" 
 				> Replace "Enter-Api-Key-Here" with your Api Key 
 				> Click save button, second from left.'
-        show-icon
-        :closable="false"
-      >
-      </el-alert>
-    </el-row>
-    <el-row v-show="invalidMode">
-      <el-alert
-        title="Invalid Translation Mode."
-        type="error"
-        description="Please enter a valid translation mode:
+            show-icon
+            :closable="false"
+          >
+          </el-alert>
+        </el-row>
+        <el-row v-show="invalidMode">
+          <el-alert
+            title="Invalid Translation Mode."
+            type="error"
+            description="Please enter a valid translation mode:
 				> For folder level translations enter -> FOLDER_LEVEL
 				
 				> For Field level translations enter -> FIELD_LEVEL"
-        show-icon
-        :closable="false"
-      >
-      </el-alert>
-    </el-row>
+            show-icon
+            :closable="false"
+          >
+          </el-alert>
+        </el-row>
+      </div>
+      <div v-else></div>
+    </div>
   </div>
-  <div v-else></div>
 </template>
 
 <script>
@@ -110,10 +135,20 @@ import {
 } from "../utils/services";
 import { languageCodes } from "./../utils/language-codes";
 
+import ConfigurationScreen from "./../components/ConfigurationScreen.vue";
+import { API_KEY_INITIAL_VALUE } from "../utils/constants";
+
 export default {
+  name: "index",
+  components: {
+    ConfigurationScreen,
+  },
   data() {
     return {
+      showConfigurationScreen: false,
       story: undefined,
+      apiKeyObj: undefined,
+      modeOfTranslationObj: undefined,
       loadingContext: true,
       invalidKey: true,
       invalidMode: true,
@@ -183,6 +218,34 @@ export default {
       }
     },
 
+    switchTabs() {
+      this.showConfigurationScreen = !this.showConfigurationScreen;
+    },
+
+    updateApiKey(apiValues) {
+      if (apiValues.key !== API_KEY_INITIAL_VALUE) {
+        this.invalidKey = false;
+      } else {
+        this.invalidKey = true;
+      }
+      this.apiKey = apiValues.key;
+      this.apiKeyObj = { ...apiValues.obj };
+    },
+
+    updateTranslationMode(translationModeObj) {
+      if (
+        translationModeObj.mode.trim() !== "FOLDER_LEVEL" &&
+        translationModeObj.mode.trim() !== "FIELD_LEVEL"
+      ) {
+        this.invalidMode = true;
+      } else {
+        this.invalidMode = false;
+      }
+
+      this.modeOfTranslation = translationModeObj.mode;
+      this.modeOfTranslationObj = { ...translationModeObj.obj };
+    },
+
     // return language name for the given code
     getlangName(langCode) {
       if (langCode !== "Default Language")
@@ -204,9 +267,11 @@ export default {
       let dataSourceObj = await fetchDataSourceEntries(this.spaceId);
 
       if (dataSourceObj) {
-        this.apiKey = dataSourceObj.apiKey;
+        this.apiKey = dataSourceObj.apiKey.value;
+        this.apiKeyObj = dataSourceObj.apiKey;
         this.invalidKey = dataSourceObj.invalidKey;
-        this.modeOfTranslation = dataSourceObj.modeOfTranslation;
+        this.modeOfTranslation = dataSourceObj.modeOfTranslation.value;
+        this.modeOfTranslationObj = dataSourceObj.modeOfTranslation;
         this.invalidMode = dataSourceObj.invalidMode;
       }
     },

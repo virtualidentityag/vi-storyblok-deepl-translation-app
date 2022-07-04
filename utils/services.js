@@ -10,6 +10,17 @@ export const fetchDataSources = async (spaceId, datasourceSlug) => {
     return datasource
 }
 
+export const updateDataSourceEntries = async (spaceId, datasource_entry) => {
+
+    let response = await Storyblok.put(`spaces/${spaceId}/datasource_entries/${datasource_entry.id}`, {
+                            "datasource_entry": datasource_entry
+                }).then(response => {
+                    return response;
+                }).catch(error => { 
+                    console.log(error)
+                })
+    return response
+}
 export const fetchDataSourceEntries = async (spaceId) => {
     let apiKey = ""
     let modeOfTranslation = ""
@@ -35,18 +46,29 @@ export const fetchDataSourceEntries = async (spaceId) => {
                 }).catch(error => { 
                     console.log(error)
                 })
-                
+    
+    // console.log('deeplKey', deeplKey)
+    // console.log('translationMode', translationMode)
+
     deeplEntryExistResult = await dataSourceAlreadyExists(deeplKey, "Api key for DeepL", "Deepl-Api-key", "deepl-api-key", "Enter-Api-Key-Here", false, spaceId)
     modeOfTranslationEntryExistResult = await dataSourceAlreadyExists(translationMode,"Mode Of Translation", "Mode-Of-Translation", "mode-of-translation", "FOLDER_LEVEL-OR-FIELD_LEVEL", true, spaceId)
 
-    if(deeplEntryExistResult){
+    if(deeplEntryExistResult && deeplEntryExistResult.entryData !== ''){
+        // console.log('deeplEntryExistResult',deeplEntryExistResult)
         apiKey = deeplEntryExistResult.entryData;
         invalidKey = deeplEntryExistResult.entryDoesNotExist
     }
+    else{
+        apiKey = deeplKey.data.datasource_entries[0];
+    }
 
-    if(modeOfTranslationEntryExistResult){
+    if(modeOfTranslationEntryExistResult && modeOfTranslationEntryExistResult.entryData !== ''){
+        // console.log('modeOfTranslationEntryExistResult',modeOfTranslationEntryExistResult)
         modeOfTranslation = modeOfTranslationEntryExistResult.entryData;
         invalidMode = modeOfTranslationEntryExistResult.entryDoesNotExist
+    }
+     else{
+        modeOfTranslation = translationMode.data.datasource_entries[0];
     }
 
     return {apiKey, invalidKey, modeOfTranslation, invalidMode}
@@ -63,8 +85,10 @@ const dataSourceAlreadyExists = async (entryKey, datasourceName, elementName, da
         if(dataSource){
             let newEntry = await createDataSourceEntry(spaceId, elementName, datasourceInitialValue, dataSource.data.datasource.id);
             
-            if(newEntry)
+            if(newEntry){
+                // console.log('newEntery', newEntry)
                 entryData = newEntry.data.datasource_entry;
+            }
             else
                 return false;
         }
@@ -75,7 +99,9 @@ const dataSourceAlreadyExists = async (entryKey, datasourceName, elementName, da
         if(key){
             if(hasFixedValue){
                 if(key.value.trim() === datasourceInitialValue.split('-OR-')[0] || key.value.trim() === datasourceInitialValue.split('-OR-')[1]){
-                    entryData = key.value;
+                    // entryData = key.value;
+                    // console.log('fixed', key)
+                    entryData = key;
                     entryDoesNotExist = false;
                 }
                 else
@@ -83,7 +109,9 @@ const dataSourceAlreadyExists = async (entryKey, datasourceName, elementName, da
             }
             else{
                 if(key.value.trim() !== datasourceInitialValue){
-                    entryData = key.value;
+                    // entryData = key.value;
+                    // console.log('deepl', key)
+                    entryData = key;
                     entryDoesNotExist = false;
                 }
                 else
@@ -96,7 +124,7 @@ const dataSourceAlreadyExists = async (entryKey, datasourceName, elementName, da
             if(datasource){
                 let dataSourceId = datasource.data.datasources.find(element => element.slug === datasourceSlug).id
                 let newEntry = await createDataSourceEntry(spaceId, elementName, datasourceInitialValue, dataSourceId)
-                
+                console.log('else newEntry', newEntry)
                 if(newEntry)
                     entryData = newEntry.data.datasource_entry
                 else
