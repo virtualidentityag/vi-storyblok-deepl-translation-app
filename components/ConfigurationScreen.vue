@@ -43,7 +43,10 @@
         </el-row>
 
         <el-form-item>
-          <el-button type="primary" @click="handleSubmit('ruleForm')"
+          <el-button
+            type="primary"
+            @click="handleSubmit('ruleForm')"
+            :disabled="disableUpdateBtn()"
             >Update</el-button
           >
         </el-form-item>
@@ -98,6 +101,15 @@ export default {
   },
 
   methods: {
+    disableUpdateBtn() {
+      if (
+        this.ruleForm.apiKey !== this.deeplKey ||
+        this.ruleForm.modeOfTranslation !== this.mode
+      )
+        return false;
+      else return true;
+    },
+
     async handleSubmit(form) {
       this.$refs[form].validate(async (valid, fieldErrorObj) => {
         if (valid) {
