@@ -136,7 +136,12 @@ import {
 import { languageCodes } from "./../utils/language-codes";
 
 import ConfigurationScreen from "./../components/ConfigurationScreen.vue";
-import { API_KEY_INITIAL_VALUE } from "../utils/constants";
+import {
+  API_KEY_DATASOURCE_NAME,
+  API_KEY_INITIAL_VALUE,
+  MODE_DATASOURCE_NAME,
+  MODE_INITIAL_VALUE,
+} from "../utils/constants";
 
 export default {
   name: "index",
@@ -161,7 +166,6 @@ export default {
       requestedLanguagesForFolderLevel: "",
       translationMode: "",
       spaceId: this.$route.query.space_id,
-      // spaceId: '157196',
     };
   },
 
@@ -218,6 +222,35 @@ export default {
       }
     },
 
+    async initDataSources() {
+      let dataSourceObj = await fetchDataSourceEntries(this.spaceId);
+
+      if (dataSourceObj) {
+        const deeplKeyObj = dataSourceObj.find(
+          (obj) => obj.name === API_KEY_DATASOURCE_NAME
+        );
+        const translationModeObj = dataSourceObj.find(
+          (obj) => obj.name === MODE_DATASOURCE_NAME
+        );
+
+        const invalidKeyValue =
+          deeplKeyObj.value !== API_KEY_INITIAL_VALUE ? false : true;
+        const invalidModeValue =
+          translationModeObj.value !== MODE_INITIAL_VALUE ? false : true;
+
+        this.apiKey = deeplKeyObj.value;
+        this.apiKeyObj = deeplKeyObj;
+        this.invalidKey = invalidKeyValue;
+
+        this.modeOfTranslation = translationModeObj.value;
+        this.modeOfTranslationObj = translationModeObj;
+        this.invalidMode = invalidModeValue;
+
+        this.showConfigurationScreen =
+          invalidKeyValue || invalidModeValue ? true : false;
+      }
+    },
+
     switchTabs() {
       this.showConfigurationScreen = !this.showConfigurationScreen;
     },
@@ -261,19 +294,6 @@ export default {
 
     getAvailableLanguagesName(code) {
       return code + " - " + this.getlangName(code);
-    },
-
-    async initDataSources() {
-      let dataSourceObj = await fetchDataSourceEntries(this.spaceId);
-
-      if (dataSourceObj) {
-        this.apiKey = dataSourceObj.apiKey.value;
-        this.apiKeyObj = dataSourceObj.apiKey;
-        this.invalidKey = dataSourceObj.invalidKey;
-        this.modeOfTranslation = dataSourceObj.modeOfTranslation.value;
-        this.modeOfTranslationObj = dataSourceObj.modeOfTranslation;
-        this.invalidMode = dataSourceObj.invalidMode;
-      }
     },
 
     transformLanguageString(languageString) {
@@ -424,20 +444,6 @@ export default {
       return newStoryJson;
     },
 
-    // updateLocalStorage(){ // to update the current selected language to the trnaslated language
-
-    // 	const privateSettings = {"lang":{"160901":"de-de"},"assetFolderStates":{},"editorMinimized":false,"expires":1654951288800}
-
-    // 	localStorage.setItem("privateSettings", JSON.stringify(privateSettings));
-
-    // 	// setTimeout(() => {
-    // 	// 	const page = window.open(`${document.referrer}#!/me/spaces/${this.spaceId}/stories/0/0/${this.story.id}?update=true`);
-    // 	// 	page.localStorage.setItem("privateSettings",JSON.stringify(privateSettings));
-    // 	// }, 1000)
-
-    // 	console.log('page opened', Storyblok)
-    // },
-
     closePage() {
       setTimeout(() => {
         window.top.close(
@@ -584,40 +590,6 @@ export default {
               extractedFieldsXML,
               sourceLanguage
             );
-
-          // this.requestedLanguagesForFieldLevel.forEach(async (requestedLanguage) => {
-          // 	const response = await deepLTranslate(
-          // 						extractedFieldsXML, requestedLanguage.split("-")[0].trim(),
-          // 						sourceLanguage, this.apiKey,
-          // 					);
-
-          // 	if (response) {
-
-          // 		let convertedXml = {
-          // 			...this.convertXMLToJSON(response.translations[0].text, extractedFields),
-          // 			language: requestedLanguage,
-          // 			page: this.story.id+"",
-          // 			text_nodes: JSON.parse(storyJson.text_nodes),
-          // 			url: JSON.parse(storyJson.url)
-          // 		}
-
-          // if(this.modeOfTranslation === 'FOLDER_LEVEL')
-          // 	storyObject = await updateStory( this.spaceId, this.story.id, JSON.stringify(convertedXml)); // folder level
-          // else
-          // 	storyObject = await updateStory( this.spaceId, this.story.id, JSON.stringify(convertedXml),requestedLanguage);
-
-          // 		if(storyObject) {
-          // 			this.successMessage();
-
-          // 			// this.updateLocalStorage();
-          // 			window.open(`${document.referrer}#!/me/spaces/${this.spaceId}/stories/0/0/${this.story.id}?update=true`);
-          // 			this.closePage();
-          // 		}
-          // 		else {
-          // 			this.languageErrorMessage(requestedLanguage)
-          // 		}
-          // 	}
-          // });
         } else
           this.customErrorMessage(
             "Requested languages should not include source language"
