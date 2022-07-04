@@ -44,10 +44,6 @@
             Translation Mode is set to:
             <strong>{{ getTranslationModeName(modeOfTranslation) }}</strong>
           </p>
-          <p class="error-text" v-else>
-            Please set the translation mode in the Datasource ->
-            Mode-Of-Translation
-          </p>
 
           <el-row v-if="modeOfTranslation === 'FIELD_LEVEL'">
             <p>Translate Into: (required)</p>
@@ -93,14 +89,9 @@
 
         <el-row v-show="invalidKey">
           <el-alert
-            title="Invalid key. Please enter a valid DeepL api key"
+            title="Invalid key."
             type="error"
-            description='Please enter a valid DeepL api key in the Datasources. Follow the steps as follows:
-				  Go back to the dashboard of your space
-				> Select Datasources from sidebar
-				> Select Datasource with name "Api Key from DeepL" 
-				> Replace "Enter-Api-Key-Here" with your Api Key 
-				> Click save button, second from left.'
+            description="Please enter a valid DeepL api key in app configuration."
             show-icon
             :closable="false"
           >
@@ -110,10 +101,7 @@
           <el-alert
             title="Invalid Translation Mode."
             type="error"
-            description="Please enter a valid translation mode:
-				> For folder level translations enter -> FOLDER_LEVEL
-				
-				> For Field level translations enter -> FIELD_LEVEL"
+            description="Please select a valid translation mode from app configuration."
             show-icon
             :closable="false"
           >
