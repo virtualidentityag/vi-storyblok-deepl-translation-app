@@ -167,7 +167,6 @@ export default {
       {
         action: "tool-changed",
         tool: "virtual-identity-ag@auto-translations-app",
-        // tool: "virtual-identity-ag@translations-backup-app",
         event: "getContext",
       },
       "https://app.storyblok.com"
@@ -178,7 +177,6 @@ export default {
       {
         action: "tool-changed",
         tool: "virtual-identity-ag@auto-translations-app",
-        // tool: "virtual-identity-ag@translations-backup-app",
         event: "heightChange",
         height: 500,
       },
