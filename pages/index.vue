@@ -11,35 +11,36 @@
         :modeObj="modeOfTranslationObj"
       />
     </div>
-    <div v-if="!showConfigurationScreen">
-      <div class="bodyFontStyle" v-if="!loadingContext">
-        <el-row v-if="!languagesAvailable">
-          <el-alert
-            title="No languages found"
-            type="error"
-            description="Please setup field level translation and add languages to use the application. 
-				For more info visit: https://www.storyblok.com/docs/guide/in-depth/internationalization"
-            show-icon
-            :closable="false"
+    <div class="bodyFontStyle" v-if="!showConfigurationScreen">
+      <el-card class="box-card">
+        <div slot="header" class="clearfix">
+          <span>Auto Translate</span>
+          <el-button
+            style="float: right"
+            type="primary"
+            size="mini"
+            v-on:click="switchTabs"
+            >Edit Configuration</el-button
           >
-          </el-alert>
-        </el-row>
-
-        <el-row v-else>
-          <el-row>
-            <el-col :span="6" :offset="11">
-              <el-button
-                icon="el-icon-setting"
-                type="primary"
-                size="mini"
-                v-on:click="switchTabs"
-                >Edit Configuration</el-button
-              >
-            </el-col>
+        </div>
+        <div class="bodyFontStyle" v-if="!loadingContext">
+          <el-row v-if="!languagesAvailable">
+            <el-alert
+              title="No languages found"
+              type="error"
+              description="Please setup field level translation and add languages to use the application. 
+          For more info visit: https://www.storyblok.com/docs/guide/in-depth/internationalization"
+              show-icon
+              :closable="false"
+            >
+            </el-alert>
           </el-row>
+
           <p>
-            Content will be translated from: {{ getlangName(currentLanguage) }}
+            Content will be translated from:
+            {{ getlangName(currentLanguage) }}
           </p>
+
           <p v-if="getTranslationModeName(modeOfTranslation)">
             Translation Mode is set to:
             <strong>{{ getTranslationModeName(modeOfTranslation) }}</strong>
@@ -82,33 +83,33 @@
               type="primary"
               size="mini"
             >
-              Translate Content
+              Translate
             </el-button>
           </el-row>
-        </el-row>
 
-        <el-row v-show="invalidKey">
-          <el-alert
-            title="Invalid key."
-            type="error"
-            description="Please enter a valid DeepL api key in app configuration."
-            show-icon
-            :closable="false"
-          >
-          </el-alert>
-        </el-row>
-        <el-row v-show="invalidMode">
-          <el-alert
-            title="Invalid Translation Mode."
-            type="error"
-            description="Please select a valid translation mode from app configuration."
-            show-icon
-            :closable="false"
-          >
-          </el-alert>
-        </el-row>
-      </div>
-      <div v-else></div>
+          <el-row v-show="invalidKey">
+            <el-alert
+              title="Invalid key."
+              type="error"
+              description="Please enter a valid DeepL api key in app configuration."
+              show-icon
+              :closable="false"
+            >
+            </el-alert>
+          </el-row>
+          <el-row v-show="invalidMode">
+            <el-alert
+              title="Invalid Translation Mode."
+              type="error"
+              description="Please select a valid translation mode from app configuration."
+              show-icon
+              :closable="false"
+            >
+            </el-alert>
+          </el-row>
+        </div>
+        <div v-else v-loading="true"></div>
+      </el-card>
     </div>
   </div>
 </template>
@@ -657,11 +658,21 @@ export default {
   display: block;
   margin-bottom: 2px;
 }
-p {
-  font-size: smaller;
+p,
+span {
+  /* font-size: smaller; */
+  font-size: 14px;
 }
 .error-text {
   color: #f56c6c;
   font-weight: bold;
+}
+.clearfix:before,
+.clearfix:after {
+  display: table;
+  content: "";
+}
+.clearfix:after {
+  clear: both;
 }
 </style>
