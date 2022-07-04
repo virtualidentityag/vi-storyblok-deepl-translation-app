@@ -1,57 +1,55 @@
 <template>
   <div class="bodyFontStyle">
-    <el-row>
-      <el-col :span="12">
-        <p>Configuration screen</p>
-      </el-col>
-      <el-col :span="6" :offset="5">
+    <el-card class="box-card">
+      <div slot="header" class="clearfix">
+        <span>Configuration screen</span>
         <el-button
-          icon="el-icon-setting"
+          style="float: right"
           type="primary"
           size="mini"
           v-on:click="closeSettings"
           >Close</el-button
         >
-      </el-col>
-    </el-row>
-    <el-form
-      :rules="rules"
-      :model="ruleForm"
-      ref="ruleForm"
-      size="mini"
-      class="demo-ruleForm"
-    >
-      <el-col>
-        <el-form-item label="Deepl Api Key" required prop="apiKey">
-          <el-input v-model="ruleForm.apiKey"></el-input>
-        </el-form-item>
-        <el-row>
-          <el-form-item
-            label="Translation Mode"
-            required
-            prop="modeOfTranslation"
-          ></el-form-item>
+      </div>
+      <el-form
+        :rules="rules"
+        :model="ruleForm"
+        ref="ruleForm"
+        size="mini"
+        class="demo-ruleForm"
+      >
+        <el-col>
+          <el-form-item label="Deepl Api Key" required prop="apiKey">
+            <el-input v-model="ruleForm.apiKey"></el-input>
+          </el-form-item>
+          <el-row>
+            <el-form-item
+              label="Translation Mode"
+              required
+              prop="modeOfTranslation"
+            ></el-form-item>
 
-          <el-radio
-            v-model="ruleForm.modeOfTranslation"
-            :label="mode.value"
-            v-for="mode in ruleForm.translationModes"
-            :key="mode.value"
-          >
-            {{ mode.label }}
-          </el-radio>
-        </el-row>
+            <el-radio
+              v-model="ruleForm.modeOfTranslation"
+              :label="mode.value"
+              v-for="mode in ruleForm.translationModes"
+              :key="mode.value"
+            >
+              {{ mode.label }}
+            </el-radio>
+          </el-row>
 
-        <el-form-item>
-          <el-button
-            type="primary"
-            @click="handleSubmit('ruleForm')"
-            :disabled="disableUpdateBtn()"
-            >Update</el-button
-          >
-        </el-form-item>
-      </el-col>
-    </el-form>
+          <el-form-item>
+            <el-button
+              type="primary"
+              @click="handleSubmit('ruleForm')"
+              :disabled="disableUpdateBtn()"
+              >Update</el-button
+            >
+          </el-form-item>
+        </el-col>
+      </el-form>
+    </el-card>
   </div>
 </template>
 <script>
