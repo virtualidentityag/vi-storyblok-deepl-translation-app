@@ -101,8 +101,10 @@ export default {
   methods: {
     disableUpdateBtn() {
       if (
-        this.ruleForm.apiKey !== this.deeplKey ||
-        this.ruleForm.modeOfTranslation !== this.mode
+        (this.ruleForm.apiKey !== this.deeplKey &&
+          this.ruleForm.apiKey !== "") ||
+        (this.ruleForm.modeOfTranslation !== this.mode &&
+          this.ruleForm.modeOfTranslation !== "")
       )
         return false;
       else return true;
