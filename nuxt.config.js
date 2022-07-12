@@ -1,12 +1,12 @@
 export default {
   // Global page headers: https://go.nuxtjs.dev/config-head
-  mode: "universal",
+
   head: {
     title: 'storyblok-translator-app',
     htmlAttrs: {
       lang: 'en'
     },
-    
+
     meta: [
       { charset: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
@@ -37,7 +37,7 @@ export default {
 
   // Modules: https://go.nuxtjs.dev/config-modules
   modules: [
-     [
+    [
       "@storyblok/nuxt-auth",
       {
         id: process.env.CONFIDENTIAL_CLIENT_ID,
