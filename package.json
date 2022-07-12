@@ -11,12 +11,12 @@
   },
   "dependencies": {
     "@storyblok/nuxt-auth": "^1.4.0",
-    "core-js": "^3.23.3",
+    "core-js": "^3.23.4",
     "axios": "^0.27.2",
     "deepl": "^1.0.13",
     "element-ui": "^2.15.9",
     "nuxt": "^2.15.8",
-    "storyblok-js-client": "^4.5.5"
+    "storyblok-js-client": "^4.5.6"
   },
   "devDependencies": {
     "storyblok-nuxt": "^2.0.1"
