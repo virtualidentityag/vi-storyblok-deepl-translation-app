@@ -1,6 +1,6 @@
 export default {
   // Global page headers: https://go.nuxtjs.dev/config-head
-
+  target: 'server',
   head: {
     title: 'storyblok-translator-app',
     htmlAttrs: {
