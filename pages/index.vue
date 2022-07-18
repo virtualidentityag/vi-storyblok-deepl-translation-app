@@ -156,9 +156,9 @@ export default {
   },
 
   mounted() {
-    // if (window.top === window.self) {
-    //   window.location.assign("https://app.storyblok.com/oauth/tool_redirect");
-    // }
+    if (window.top === window.self) {
+      window.location.assign("https://app.storyblok.com/oauth/tool_redirect");
+    }
 
     window.addEventListener("message", this.processMessage, false);
 
