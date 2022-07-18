@@ -41,7 +41,7 @@ export default {
       "@storyblok/nuxt-auth",
       {
         id: process.env.CONFIDENTIAL_CLIENT_ID,
-        secret: process.env.CLIENT_SECRET,
+        secret: process.env.CONFIDENTIAL_CLIENT_SECRET,
         redirect_uri: process.env.CONFIDENTIAL_CLIENT_REDIRECT_URI,
       },
     ],
