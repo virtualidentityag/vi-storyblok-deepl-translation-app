@@ -185,7 +185,7 @@ export default {
       "https://app.storyblok.com"
     );
 
-    // this.initDataSources();
+    this.initDataSources();
   },
 
   methods: {
