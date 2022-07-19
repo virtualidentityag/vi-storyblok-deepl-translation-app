@@ -491,8 +491,8 @@ export default {
 			extractedFieldsXML,
 			sourceLanguage
 		) {
-			let counter = 0
-			let returnResponse = await this.requestedLanguagesForFieldLevel.forEach(
+
+			this.requestedLanguagesForFieldLevel.forEach(
 				async (requestedLanguage, index) => {
 					console.log('index', index, this.requestedLanguagesForFieldLevel.length)
 					const response = await deepLTranslate(
@@ -503,7 +503,7 @@ export default {
 					);
 
 					if (response) {
-						counter++;
+
 						let convertedXml = {
 							...this.convertXMLToJSON(
 								response.translations[0].text,
