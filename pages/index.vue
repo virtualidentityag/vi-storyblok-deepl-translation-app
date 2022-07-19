@@ -159,33 +159,34 @@ export default {
 		if (window.top === window.self) {
 			window.location.assign("https://app.storyblok.com/oauth/tool_redirect");
 		}
+		else {
+			window.addEventListener("message", this.processMessage, false);
 
-		window.addEventListener("message", this.processMessage, false);
+			//Use getContext to get the current story
+			window.parent.postMessage(
+				{
+					action: "tool-changed",
+					// tool: "virtual-identity-ag@auto-translations-app",
+					tool: "virtual-identity-ag@translations-backup-app",
+					event: "getContext",
+				},
+				"https://app.storyblok.com"
+			);
 
-		//Use getContext to get the current story
-		window.parent.postMessage(
-			{
-				action: "tool-changed",
-				// tool: "virtual-identity-ag@auto-translations-app",
-				tool: "virtual-identity-ag@translations-backup-app",
-				event: "getContext",
-			},
-			"https://app.storyblok.com"
-		);
+			// Use heightChange to change the height of the tool
+			window.parent.postMessage(
+				{
+					action: "tool-changed",
+					// tool: "virtual-identity-ag@auto-translations-app",
+					tool: "virtual-identity-ag@translations-backup-app",
+					event: "heightChange",
+					height: 500,
+				},
+				"https://app.storyblok.com"
+			);
 
-		// Use heightChange to change the height of the tool
-		window.parent.postMessage(
-			{
-				action: "tool-changed",
-				// tool: "virtual-identity-ag@auto-translations-app",
-				tool: "virtual-identity-ag@translations-backup-app",
-				event: "heightChange",
-				height: 500,
-			},
-			"https://app.storyblok.com"
-		);
-
-		this.initDataSources();
+			this.initDataSources();
+		}
 	},
 
 	methods: {
