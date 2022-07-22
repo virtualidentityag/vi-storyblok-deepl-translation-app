@@ -494,7 +494,7 @@ export default {
 
 			this.requestedLanguagesForFieldLevel.forEach(
 				async (requestedLanguage, index) => {
-					console.log('index', index, this.requestedLanguagesForFieldLevel.length)
+
 					const response = await deepLTranslate(
 						extractedFieldsXML,
 						requestedLanguage.split("-")[0].trim(),
