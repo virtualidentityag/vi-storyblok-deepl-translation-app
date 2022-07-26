@@ -6,17 +6,15 @@
     "dev": "nuxt",
     "build": "nuxt build",
     "start": "nuxt start",
-    "generate": "nuxt generate",
     "deploy": "npm ci && npm run build && npm run start"
   },
   "dependencies": {
     "@storyblok/nuxt-auth": "^1.4.0",
-    "axios": "^0.27.2",
-    "core-js": "^2.6.12",
+    "core-js": "^3.22.4",
     "deepl": "^1.0.13",
     "element-ui": "^2.15.9",
-    "nuxt": "^2.12.2",
-    "storyblok-js-client": "^4.5.6"
+    "nuxt": "^2.15.7",
+    "storyblok-js-client": "^4.5.0"
   },
   "devDependencies": {
     "storyblok-nuxt": "^2.0.1"

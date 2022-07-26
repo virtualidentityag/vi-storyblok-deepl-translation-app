@@ -1,4 +1,5 @@
-import Storyblok from "./storyblok-config";
+import { MODE_INITIAL_VALUE } from "./constants";
+import Storyblok from "./Storyblok-config";
 
 export const fetchDataSources = async (spaceId, datasourceSlug) => {
     let datasource = await Storyblok.get(`spaces/${spaceId}/datasources`, { "slug": datasourceSlug })
@@ -45,7 +46,7 @@ export const fetchDataSourceEntries = async (spaceId) => {
         hasFixedValue: false,
     }, {
         elementName: "Mode-Of-Translation",
-        datasourceInitialValue: "FOLDER_LEVEL-OR-FIELD_LEVEL",
+        datasourceInitialValue: MODE_INITIAL_VALUE,
         hasFixedValue: true,
     }]
 
