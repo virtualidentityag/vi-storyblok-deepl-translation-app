@@ -77,6 +77,9 @@ const dataSourceAlreadyExists = async (entryKey, datasourceName, dataSourcesArra
                 .then(res => {
                     dataSourceEntryValues = res.map(entry => entry.data.datasource_entry)
                 })
+                .catch(error => {
+                    console.log(error)
+                })
         }
     }
     else {
@@ -98,6 +101,9 @@ const dataSourceAlreadyExists = async (entryKey, datasourceName, dataSourcesArra
                 .then(res => {
                     dataSourceEntryValues = res.map(entry => entry.data.datasource_entry)
                     dataSourceEntryValues = Array.from(entryKey.data.datasource_entries.concat(dataSourceEntryValues))
+                })
+                .catch(error => {
+                    console.log(error)
                 })
         }
     }
